@@ -1,0 +1,25 @@
+{
+  "name": "rvo",
+  "version": "0.0.1",
+  "description": "rvo h5",
+  "main": "index.js",
+  "type": "module",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "rollup --config",
+    "watch": "rollup --config -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "rollup": "^3.20.2",
+    "rollup-plugin-dts": "^5.3.0",
+    "rollup-plugin-typescript2": "^0.34.1"
+  }
+}

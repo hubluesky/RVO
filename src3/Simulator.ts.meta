@@ -1,0 +1,13 @@
+{
+  "ver": "4.0.23",
+  "importer": "typescript",
+  "imported": true,
+  "uuid": "385fc4eb-c3bb-475b-976f-c59e2ce353c8",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "moduleId": "project:///assets/Script/Framework/RVO2/Simulator.js",
+    "importerSettings": 0,
+    "simulateGlobals": []
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "ver": "4.0.23",
+  "importer": "typescript",
+  "imported": true,
+  "uuid": "55e00855-f628-45f2-8b07-ccafc3f0a071",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "moduleId": "project:///assets/Script/Framework/RVO2/KdTree.js",
+    "importerSettings": 0,
+    "simulateGlobals": []
+  }
+}

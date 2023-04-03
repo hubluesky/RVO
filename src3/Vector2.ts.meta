@@ -1,0 +1,13 @@
+{
+  "ver": "4.0.23",
+  "importer": "typescript",
+  "imported": true,
+  "uuid": "400fcf06-1be1-4c73-8f34-e22bd56b4881",
+  "files": [],
+  "subMetas": {},
+  "userData": {
+    "moduleId": "project:///assets/Script/Framework/RVO2/Vector2.js",
+    "importerSettings": 0,
+    "simulateGlobals": []
+  }
+}
