@@ -37,6 +37,8 @@ import { RVOMath } from "./RVOMath";
 import { Simulator } from "./Simulator";
 import { Vector2 } from "./Vector2";
 
+const __vecTemp1 = new Vector2();
+
 /**
  * Defines an agent in the simulation.
  */
@@ -64,11 +66,11 @@ export class Agent {
    * Computes the neighbors of this agent.
    */
   public computeNeighbors() {
-    this.obstacleNeighbors_ = [];
+    this.obstacleNeighbors_.length = 0;
     let rangeSq = RVOMath.sqr(this.timeHorizonObst_ * this.maxSpeed_ + this.radius_);
     this.simulator.kdTree_.computeObstacleNeighbors(this, rangeSq);
 
-    this.agentNeighbors_ = [];
+    this.agentNeighbors_.length = 0;
 
     if (this.maxNeighbors_ > 0) {
       rangeSq = RVOMath.sqr(this.neighborDist_);
@@ -130,12 +132,12 @@ export class Agent {
         Vector2.subtract(Vector2.negate(relativePosition1), Vector2.multiply(obstacleVector, s))
       );
 
-      let line: Line = { point: new Vector2(0, 0), direction: new Vector2(0, 0) };
+      const line: Line = new Line();
 
       if (s < 0.0 && distSq1 <= radiusSq) {
         /* Collision with left vertex. Ignore if non-convex. */
         if (obstacle1.convex_) {
-          line.point = new Vector2(0.0, 0.0);
+          line.point.reset();
           line.direction = RVOMath.normalize(new Vector2(-relativePosition1.y, relativePosition1.x));
           this.orcaLines_.push(line);
         }
@@ -147,7 +149,7 @@ export class Agent {
          * it will be taken care of by neighboring obstacle.
          */
         if (obstacle2.convex_ && RVOMath.det(relativePosition2, obstacle2.direction_) >= 0.0) {
-          line.point = new Vector2(0.0, 0.0);
+          line.point.reset();
           line.direction = RVOMath.normalize(new Vector2(-relativePosition2.y, relativePosition2.x));
           this.orcaLines_.push(line);
         }
@@ -155,7 +157,7 @@ export class Agent {
         continue;
       } else if (s >= 0.0 && s <= 1.0 && distSqLine <= radiusSq) {
         /* Collision with obstacle segment. */
-        line.point = new Vector2(0.0, 0.0);
+        line.point.reset();
         line.direction = Vector2.negate(obstacle1.direction_);
         this.orcaLines_.push(line);
 
@@ -331,7 +333,7 @@ export class Agent {
       const combinedRadius = this.radius_ + other.radius_;
       const combinedRadiusSq = RVOMath.sqr(combinedRadius);
 
-      let line: Line = { direction: new Vector2(0, 0), point: new Vector2(0, 0) };
+      const line: Line = new Line();
       let u: Vector2;
 
       if (distSq > combinedRadiusSq) {
@@ -383,11 +385,10 @@ export class Agent {
       this.orcaLines_.push(line);
     }
 
-    const [lineFail, result] = this.linearProgram2(this.orcaLines_, this.maxSpeed_, this.prefVelocity_, false, this.newVelocity_);
-    this.newVelocity_ = result;
-
-    if (lineFail < this.orcaLines_.length) {
-      this.linearProgram3(this.orcaLines_, numObstLines, lineFail, this.maxSpeed_, this.newVelocity_);
+    const result = this.linearProgram2(this.orcaLines_, this.maxSpeed_, this.prefVelocity_, false);
+    this.newVelocity_.set(result.velocity);
+    if (result.lineFail < this.orcaLines_.length) {
+      this.linearProgram3(this.orcaLines_, numObstLines, result.lineFail, this.maxSpeed_, this.newVelocity_);
     }
   }
 
@@ -396,7 +397,7 @@ export class Agent {
    * @param agent A pointer to the agent to be inserted.
    * @param rangeSq The squared range around this agent.
    */
-  public insertAgentNeighbor(agent: Agent, rangeSq: number) {
+  public insertAgentNeighbor(agent: Agent, rangeSq: number): number {
     if (this != agent) {
       const distSq = RVOMath.absSq(Vector2.subtract(this.position_, agent.position_));
 
@@ -419,6 +420,7 @@ export class Agent {
         }
       }
     }
+    return rangeSq;
   }
 
   /**
@@ -448,7 +450,7 @@ export class Agent {
    * Updates the two-dimensional position and two-dimensional velocity of this agent.
    */
   public update() {
-    this.velocity_ = this.newVelocity_;
+    this.velocity_ = (this.newVelocity_).clone();
     this.position_ = Vector2.add(this.position_, Vector2.multiply(this.velocity_, this.simulator.timeStep_));
   }
 
@@ -462,15 +464,15 @@ export class Agent {
    * @param optVelocity The optimization velocity.
    * @param directionOpt True if the direction should be optimized.
    * @param result A reference to the result of the linear program.
-   * @returns True if successful.
+   * @returns velocity if successful.
    */
-  private linearProgram1(lines: Line[], lineNo: number, radius: number, optVelocity: Vector2, directionOpt: boolean, result: Vector2) {
+  private linearProgram1(lines: Line[], lineNo: number, radius: number, optVelocity: Vector2, directionOpt: boolean) {
     const dotProduct = Vector2.dot(lines[lineNo].point, lines[lineNo].direction);
     const discriminant = RVOMath.sqr(dotProduct) + RVOMath.sqr(radius) - RVOMath.absSq(lines[lineNo].point);
 
     if (discriminant < 0.0) {
       /* Max speed circle fully invalidates line lineNo. */
-      return false;
+      return null;
     }
 
     const sqrtDiscriminant = RVOMath.sqrt(discriminant);
@@ -483,9 +485,8 @@ export class Agent {
 
       if (RVOMath.fabs(denominator) <= RVOMath.RVO_EPSILON) {
         /* Lines lineNo and i are (almost) parallel. */
-        if (numerator < 0.0) {
-          return false;
-        }
+        if (numerator < 0.0)
+          return null;
 
         continue;
       }
@@ -500,11 +501,11 @@ export class Agent {
         tLeft = Math.max(tLeft, t);
       }
 
-      if (tLeft > tRight) {
-        return false;
-      }
+      if (tLeft > tRight)
+        return null;
     }
 
+    let result: Vector2;
     if (directionOpt) {
       /* Optimize direction. */
       if (Vector2.dot(optVelocity, lines[lineNo].direction) > 0.0) {
@@ -538,10 +539,11 @@ export class Agent {
    * @param radius The radius of the circular constraint.
    * @param optVelocity The optimization velocity.
    * @param directionOpt True if the direction should be optimized.
-   * @param result A reference to the result of the linear program.
    * @returns The number of the line it fails on, and the number of lines if successful.
+   * A reference to the result of the linear program.
    */
-  private linearProgram2(lines: Line[], radius: number, optVelocity: Vector2, directionOpt: boolean, result: Vector2): [number, Vector2] {
+  private linearProgram2(lines: Line[], radius: number, optVelocity: Vector2, directionOpt: boolean): { lineFail: number, velocity: Vector2 } {
+    let result: Vector2;
     if (directionOpt) {
       /*
        * Optimize direction. Note that the optimization velocity is of
@@ -559,18 +561,14 @@ export class Agent {
     for (let i = 0; i < lines.length; ++i) {
       if (RVOMath.det(lines[i].direction, Vector2.subtract(lines[i].point, result)) > 0.0) {
         /* Result does not satisfy constraint i. Compute new optimal result. */
-        const tempResult = result;
-        const linearResult = this.linearProgram1(lines, i, radius, optVelocity, directionOpt, result);
-        if (linearResult === false) {
-          result = tempResult;
-          return [i, result];
-        } else {
-          result = linearResult;
-        }
+        const tempResult = this.linearProgram1(lines, i, radius, optVelocity, directionOpt);
+        if (tempResult == null)
+          return { lineFail: i, velocity: result };
+        result = tempResult;
       }
     }
 
-    return [lines.length, result]
+    return { lineFail: lines.length, velocity: result };
   }
 
   /**
@@ -594,7 +592,7 @@ export class Agent {
         }
 
         for (let j = numObstLines; j < i; ++j) {
-          const line: Line = { direction: new Vector2(0, 0), point: new Vector2(0, 0) };
+          const line: Line = new Line();
 
           const determinant = RVOMath.det(lines[i].direction, lines[j].direction);
 
@@ -618,19 +616,15 @@ export class Agent {
           projLines.push(line);
         }
 
-        const tempResult = result;
-        const linearResult = this.linearProgram2(projLines, radius, new Vector2(-lines[i].direction.y, lines[i].direction.x), true, result);
-        const lineCount = linearResult[0];
-        if (lineCount >= projLines.length) {
-          result = linearResult[1];
-        } else {
+        const tempResult = this.linearProgram2(projLines, radius, new Vector2(-lines[i].direction.y, lines[i].direction.x), true);
+        if (tempResult.lineFail >= projLines.length) {
           /*
            * This should in principle not happen. The result is by
            * definition already in the feasible region of this
            * linear program. If it fails, it is due to small
            * floating point error, and the current result is kept.
            */
-          result = tempResult;
+          result = tempResult.velocity;
         }
 
         distance = RVOMath.det(lines[i].direction, Vector2.subtract(lines[i].point, result));

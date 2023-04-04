@@ -132,16 +132,15 @@ class ObstacleTreeNode {
   public right_: ObstacleTreeNode;
 };
 
+/**
+ * The maximum size of an agent k-D tree leaf.
+ */
+const MAX_LEAF_SIZE = 10;
 
 /**
  * Defines k-D trees for agents and static obstacles in the simulation.
  */
 export class KdTree {
-
-  /**
-   * The maximum size of an agent k-D tree leaf.
-   */
-  private readonly MAX_LEAF_SIZE = 10;
 
   private agents_: Agent[] | null = null;
   private agentTree_: AgentTreeNode[] = [];
@@ -192,8 +191,8 @@ export class KdTree {
    * @param agent The agent for which agent neighbors are to be computed.
    * @param rangeSq The squared range around the agent.
    */
-  public computeAgentNeighbors(agent: Agent, rangeSq: number) {
-    this.queryAgentTreeRecursive(agent, rangeSq, 0);
+  public computeAgentNeighbors(agent: Agent, rangeSq: number): number {
+    return this.queryAgentTreeRecursive(agent, rangeSq, 0);
   }
 
   /**
@@ -235,7 +234,7 @@ export class KdTree {
       this.agentTree_[node].minY_ = Math.min(this.agentTree_[node].minY_, this.agents_[i].position_.y);
     }
 
-    if (end - begin > this.MAX_LEAF_SIZE) {
+    if (end - begin > MAX_LEAF_SIZE) {
       /* No leaf node. */
       const isVertical = this.agentTree_[node].maxX_ - this.agentTree_[node].minX_ > this.agentTree_[node].maxY_ - this.agentTree_[node].minY_;
       const splitValue = 0.5 * (isVertical ? this.agentTree_[node].maxX_ + this.agentTree_[node].minX_ : this.agentTree_[node].maxY_ + this.agentTree_[node].minY_);
@@ -263,9 +262,10 @@ export class KdTree {
 
       let leftSize = left - begin;
 
-      if (leftSize === 0) {
+      if (leftSize == 0) {
         ++leftSize;
         ++left;
+        ++right;
       }
 
       this.agentTree_[node].left_ = node + 1;
@@ -436,10 +436,10 @@ export class KdTree {
    * @param rangeSq The squared range around the agent.
    * @param node The current agent k-D tree node index.
    */
-  private queryAgentTreeRecursive(agent: Agent, rangeSq: number, node: number) {
-    if (this.agentTree_[node].end_ - this.agentTree_[node].begin_ <= this.MAX_LEAF_SIZE) {
+  private queryAgentTreeRecursive(agent: Agent, rangeSq: number, node: number): number {
+    if (this.agentTree_[node].end_ - this.agentTree_[node].begin_ <= MAX_LEAF_SIZE) {
       for (let i = this.agentTree_[node].begin_; i < this.agentTree_[node].end_; ++i) {
-        agent.insertAgentNeighbor(this.agents_[i], rangeSq);
+        rangeSq = agent.insertAgentNeighbor(this.agents_[i], rangeSq);
       }
     }
     else {
@@ -448,24 +448,24 @@ export class KdTree {
 
       if (distSqLeft < distSqRight) {
         if (distSqLeft < rangeSq) {
-          this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].left_);
+          rangeSq = this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].left_);
 
           if (distSqRight < rangeSq) {
-            this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].right_);
+            rangeSq = this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].right_);
           }
         }
       }
       else {
         if (distSqRight < rangeSq) {
-          this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].right_);
+          rangeSq = this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].right_);
 
           if (distSqLeft < rangeSq) {
-            this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].left_);
+            rangeSq = this.queryAgentTreeRecursive(agent, rangeSq, this.agentTree_[node].left_);
           }
         }
       }
-
     }
+    return rangeSq;
   }
 
   /**

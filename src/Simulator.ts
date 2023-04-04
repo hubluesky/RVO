@@ -60,7 +60,6 @@ export class Simulator {
    */
   constructor() {
     this.clear();
-    this.setNumWorkers(1);
   }
 
   /**
@@ -168,7 +167,7 @@ export class Simulator {
     this.obstacles_ = [];
     this.globalTime_ = 0;
     this.timeStep_ = 0.1;
-    this.setNumWorkers(0);
+    this.setNumWorkers(1);
   }
 
   /**
@@ -216,7 +215,7 @@ export class Simulator {
    * @param neighborNo The number of the agent neighbor to be retrieved.
    * @returns The number of the neighboring agent.
    */
-  public getAgentAgentNeighbor(agentNo: number, neighborNo: number) {
+  public getAgentAgentNeighbor(agentNo: number, neighborNo: number): number {
     return this.agents_[agentNo].agentNeighbors_[neighborNo][1].id_;
   }
 
@@ -225,7 +224,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose maximum neighbor count is to be retrieved.
    * @returns The present maximum neighbor count of the agent.
    */
-  public getAgentMaxNeighbors(agentNo: number) {
+  public getAgentMaxNeighbors(agentNo: number): number {
     return this.agents_[agentNo].maxNeighbors_;
   }
 
@@ -234,7 +233,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose maximum speed is to be retrieved.
    * @returns The present maximum speed of the agent.
    */
-  public getAgentMaxSpeed(agentNo: number) {
+  public getAgentMaxSpeed(agentNo: number): number {
     return this.agents_[agentNo].maxSpeed_;
   }
 
@@ -243,7 +242,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose maximum neighbor distance is to be retrieved.
    * @returns The present maximum neighbor distance of the agent.
    */
-  public getAgentNeighborDist(agentNo: number) {
+  public getAgentNeighborDist(agentNo: number): number {
     return this.agents_[agentNo].neighborDist_;
   }
 
@@ -254,7 +253,7 @@ export class Simulator {
    * @returns The count of agent neighbors taken into account to compute
    * the current velocity for the specified agent.
    */
-  public getAgentNumAgentNeighbors(agentNo: number) {
+  public getAgentNumAgentNeighbors(agentNo: number): number {
     return this.agents_[agentNo].agentNeighbors_.length;
   }
 
@@ -265,7 +264,7 @@ export class Simulator {
    * @returns The count of obstacle neighbors taken into account to
    * compute the current velocity for the specified agent.
    */
-  public getAgentNumObstacleNeighbors(agentNo: number) {
+  public getAgentNumObstacleNeighbors(agentNo: number): number {
     return this.agents_[agentNo].obstacleNeighbors_.length;
   }
 
@@ -277,7 +276,7 @@ export class Simulator {
    * @returns The number of the first vertex of the neighboring obstacle
    * edge.
    */
-  public getAgentObstacleNeighbor(agentNo: number, neighborNo: number) {
+  public getAgentObstacleNeighbor(agentNo: number, neighborNo: number): number {
     return this.agents_[agentNo].obstacleNeighbors_[neighborNo][1].id_;
   }
 
@@ -289,7 +288,7 @@ export class Simulator {
    * are to be retrieved.
    * @returns A list of lines representing the ORCA constraints.
    */
-  public getAgentOrcaLines(agentNo: number): Line[] {
+  public getAgentOrcaLines(agentNo: number): readonly Line[] {
     return this.agents_[agentNo].orcaLines_;
   }
 
@@ -316,7 +315,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose radius is to be retrieved.
    * @returns The present radius of the agent.
    */
-  public getAgentRadius(agentNo: number) {
+  public getAgentRadius(agentNo: number): number {
     return this.agents_[agentNo].radius_;
   }
 
@@ -325,7 +324,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose time horizon is to be retrieved.
    * @returns The present time horizon of the agent.
    */
-  public getAgentTimeHorizon(agentNo: number) {
+  public getAgentTimeHorizon(agentNo: number): number {
     return this.agents_[agentNo].timeHorizon_;
   }
 
@@ -334,7 +333,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose time horizon with respect to obstacles is to be retrieved.
    * @returns The present time horizon with respect to obstacles of the agent.
    */
-  public getAgentTimeHorizonObst(agentNo: number) {
+  public getAgentTimeHorizonObst(agentNo: number): number {
     return this.agents_[agentNo].timeHorizonObst_;
   }
 
@@ -351,7 +350,7 @@ export class Simulator {
    * Returns the global time of the simulation.
    * @returns The present global time of the simulation (zero initially).
    */
-  public getGlobalTime() {
+  public getGlobalTime(): number {
     return this.globalTime_;
   }
 
@@ -359,7 +358,7 @@ export class Simulator {
    * Returns the count of agents in the simulation.
    * @returns The count of agents in the simulation.
    */
-  public getNumAgents() {
+  public getNumAgents(): number {
     return this.agents_.length;
   }
 
@@ -367,7 +366,7 @@ export class Simulator {
    * Returns the count of obstacle vertices in the simulation.
    * @returns The count of obstacle vertices in the simulation.
    */
-  public getNumObstacleVertices() {
+  public getNumObstacleVertices(): number {
     return this.obstacles_.length;
   }
 
@@ -375,7 +374,7 @@ export class Simulator {
    * Returns the count of workers.
    * @returns The count of workers.
    */
-  public getNumWorkers() {
+  public getNumWorkers(): number {
     return this.numWorkers_;
   }
 
@@ -393,7 +392,7 @@ export class Simulator {
    * @param vertexNo The number of the obstacle vertex whose successor is to be retrieved.
    * @returns The number of the obstacle vertex succeeding the specified obstacle vertex in its polygon.
    */
-  public getNextObstacleVertexNo(vertexNo: number) {
+  public getNextObstacleVertexNo(vertexNo: number): number {
     return this.obstacles_[vertexNo].next_.id_;
   }
 
@@ -402,7 +401,7 @@ export class Simulator {
    * @param vertexNo The number of the obstacle vertex whose predecessor is to be retrieved.
    * @returns The number of the obstacle vertex preceding the specified obstacle vertex in its polygon.
    */
-  public getPrevObstacleVertexNo(vertexNo: number) {
+  public getPrevObstacleVertexNo(vertexNo: number): number {
     return this.obstacles_[vertexNo].previous_.id_;
   }
 
@@ -410,7 +409,7 @@ export class Simulator {
    * Returns the time step of the simulation.
    * @returns The present time step of the simulation.
    */
-  public getTimeStep() {
+  public getTimeStep(): number {
     return this.timeStep_;
   }
 
@@ -418,7 +417,7 @@ export class Simulator {
    * Processes the obstacles that have been added so that they are accounted for in the simulation.
    * Obstacles added to the simulation after this function has been called are not accounted for in the simulation.
    */
-  public processObstacles() {
+  public processObstacles(): void {
     this.kdTree_.buildObstacleTree();
   }
 
@@ -432,7 +431,7 @@ export class Simulator {
    * @returns A boolean specifying whether the two points are mutually
    * visible. Returns true when the obstacles have not been processed.
    */
-  public queryVisibility(point1: Vector2, point2: Vector2, radius: number) {
+  public queryVisibility(point1: Vector2, point2: Vector2, radius: number): boolean {
     return this.kdTree_.queryVisibility(point1, point2, radius);
   }
 
@@ -463,7 +462,7 @@ export class Simulator {
    * @param maxSpeed The default maximum speed of a new agent. Must be non-negative.
    * @param velocity The default initial two-dimensional linear velocity of a new agent.
    */
-  public setAgentDefaults(neighborDist: number, maxNeighbors: number, timeHorizon: number, timeHorizonObst: number, radius: number, maxSpeed: number, velocity: Vector2) {
+  public setAgentDefaults(neighborDist: number, maxNeighbors: number, timeHorizon: number, timeHorizonObst: number, radius: number, maxSpeed: number): void {
     if (this.defaultAgent_ == null) {
       this.defaultAgent_ = new Agent(this);
     }
@@ -474,7 +473,6 @@ export class Simulator {
     this.defaultAgent_.radius_ = radius;
     this.defaultAgent_.timeHorizon_ = timeHorizon;
     this.defaultAgent_.timeHorizonObst_ = timeHorizonObst;
-    this.defaultAgent_.velocity_ = velocity;
   }
 
   /**
@@ -482,7 +480,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose maximum neighbor count is to be modified.
    * @param maxNeighbors The replacement maximum neighbor count.
    */
-  public setAgentMaxNeighbors(agentNo: number, maxNeighbors: number) {
+  public setAgentMaxNeighbors(agentNo: number, maxNeighbors: number): void {
     this.agents_[agentNo].maxNeighbors_ = maxNeighbors;
   }
 
@@ -491,7 +489,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose maximum speed is to be modified.
    * @param maxSpeed The replacement maximum speed. Must be non-negative.
    */
-  public setAgentMaxSpeed(agentNo: number, maxSpeed: number) {
+  public setAgentMaxSpeed(agentNo: number, maxSpeed: number): void {
     this.agents_[agentNo].maxSpeed_ = maxSpeed;
   }
 
@@ -500,7 +498,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose maximum neighbor distance is to be modified.
    * @param neighborDist The replacement maximum neighbor distance. Must be non-negative.
    */
-  public setAgentNeighborDist(agentNo: number, neighborDist: number) {
+  public setAgentNeighborDist(agentNo: number, neighborDist: number): void {
     this.agents_[agentNo].neighborDist_ = neighborDist;
   }
 
@@ -509,8 +507,8 @@ export class Simulator {
    * @param agentNo The number of the agent whose two-dimensional position is to be modified.
    * @param position The replacement of the two-dimensional position.
    */
-  public setAgentPosition(agentNo: number, position: Vector2) {
-    this.agents_[agentNo].position_ = position;
+  public setAgentPosition(agentNo: number, position: Vector2): void {
+    this.agents_[agentNo].position_.set(position);
   }
 
   /**
@@ -518,8 +516,8 @@ export class Simulator {
    * @param agentNo The number of the agent whose two-dimensional preferred velocity is to be modified.
    * @param prefVelocity The replacement of the two-dimensional preferred velocity.
    */
-  public setAgentPrefVelocity(agentNo: number, prefVelocity: Vector2) {
-    this.agents_[agentNo].prefVelocity_ = prefVelocity;
+  public setAgentPrefVelocity(agentNo: number, prefVelocity: Vector2): void {
+    this.agents_[agentNo].prefVelocity_.set(prefVelocity);
   }
 
   /**
@@ -527,7 +525,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose radius is to be modified.
    * @param radius The replacement radius. Must be non-negative.
    */
-  public setAgentRadius(agentNo: number, radius: number) {
+  public setAgentRadius(agentNo: number, radius: number): void {
     this.agents_[agentNo].radius_ = radius;
   }
 
@@ -536,7 +534,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose time horizon is to be modified.
    * @param timeHorizon The replacement time horizon with respect to other agents. Must be positive.
    */
-  public setAgentTimeHorizon(agentNo: number, timeHorizon: number) {
+  public setAgentTimeHorizon(agentNo: number, timeHorizon: number): void {
     this.agents_[agentNo].timeHorizon_ = timeHorizon;
   }
 
@@ -545,7 +543,7 @@ export class Simulator {
    * @param agentNo The number of the agent whose time horizon with respect to obstacles is to be modified.
    * @param timeHorizonObst The replacement time horizon with respect to obstacles. Must be positive.
    */
-  public setAgentTimeHorizonObst(agentNo: number, timeHorizonObst: number) {
+  public setAgentTimeHorizonObst(agentNo: number, timeHorizonObst: number): void {
     this.agents_[agentNo].timeHorizonObst_ = timeHorizonObst;
   }
 
@@ -554,15 +552,15 @@ export class Simulator {
    * @param agentNo The number of the agent whose two-dimensional linear velocity is to be modified.
    * @param velocity The replacement two-dimensional linear velocity.
    */
-  public setAgentVelocity(agentNo: number, velocity: Vector2) {
-    this.agents_[agentNo].velocity_ = velocity;
+  public setAgentVelocity(agentNo: number, velocity: Vector2): void {
+    this.agents_[agentNo].velocity_.set(velocity);
   }
 
   /**
    * Sets the global time of the simulation.
    * @param globalTime The global time of the simulation.
    */
-  public setGlobalTime(globalTime: number) {
+  public setGlobalTime(globalTime: number): void {
     this.globalTime_ = globalTime;
   }
 
@@ -570,7 +568,7 @@ export class Simulator {
    * Sets the number of workers.
    * @param numWorkers The number of workers.
    */
-  public setNumWorkers(numWorkers: number) {
+  public setNumWorkers(numWorkers: number): void {
     this.numWorkers_ = numWorkers;
 
     // if (this.numWorkers_ <= 0) {
@@ -583,7 +581,7 @@ export class Simulator {
    * Sets the time step of the simulation.
    * @param timeStep The time step of the simulation. Must be positive.
    */
-  public setTimeStep(timeStep: number) {
+  public setTimeStep(timeStep: number): void {
     this.timeStep_ = timeStep;
   }
 }

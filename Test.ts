@@ -16,13 +16,13 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
     const agentRender: { id: number, arrive: boolean, color: string }[] = [];
     const setupScenario = function () {
         /* Specify the global time step of the simulation. */
-        rvo.setTimeStep(0.25);
+        rvo.setTimeStep(0.55);
 
         /*
          * Specify the default parameters for agents that are subsequently
          * added.
          */
-        rvo.setAgentDefaults(radius * 4, 10, 10, 10, radius, 5.0, new Vector2);
+        rvo.setAgentDefaults(radius * 4, 10, 10, 10, radius, 5.0);
 
         /*
          * Add agents, specifying their start position, and store their
@@ -84,9 +84,10 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
             if (RVOMath.absSq(direction) > radius * radius) {
                 result = false;
             } else {
-                // rvo.setAgentPrefVelocity(i, new Vector2());
-                // rvo.setAgentMaxNeighbors(i, 0);
-                rvo.agents_[i].isFreeze = true;
+                rvo.setAgentPrefVelocity(i, new Vector2());
+                rvo.setAgentVelocity(i, new Vector2());
+                rvo.setAgentMaxNeighbors(i, 0);
+                // rvo.agents_[i].isFreeze = true;
                 agentRender[i].color = "#ff0000";
                 agentRender[i].arrive = true;
             }

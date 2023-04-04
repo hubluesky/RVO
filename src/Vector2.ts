@@ -31,7 +31,6 @@
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 
-
 /**
  * Defines a two-dimensional vector.
  */
@@ -51,6 +50,18 @@ export class Vector2 {
    */
   public toString(): string {
     return "(" + this.x + "," + this.y + ")";
+  }
+
+  public reset(): this {
+    this.x = 0;
+    this.y = 0;
+    return this;
+  }
+
+  public set(other: Vector2): this {
+    this.x = other.x;
+    this.y = other.y;
+    return this;
   }
 
   public dot(other: Vector2): number {
