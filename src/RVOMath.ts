@@ -34,82 +34,57 @@
 import { Vector2 } from "./Vector2";
 
 /**
- * <summary>Contains functions and constants used in multiple classes.
- * </summary>
+ * Contains functions and constants used in multiple classes.
  */
 export class RVOMath {
   /**
-   * <summary>A sufficiently small positive number.</summary>
+   * A sufficiently small positive number.
    */
   public static readonly RVO_EPSILON = 0.00001;
 
   /**
-   * <summary>Computes the length of a specified two-dimensional vector.
-   * </summary>
-   *
-   * <param name="vector">The two-dimensional vector whose length is to be
-   * computed.</param>
-   * <returns>The length of the two-dimensional vector.</returns>
+   * Computes the length of a specified two-dimensional vector.
+   * @param vector The two-dimensional vector whose length is to be computed.
+   * @returns The length of the two-dimensional vector.
    */
   public static abs(vector: Vector2) {
     return this.sqrt(this.absSq(vector));
   }
 
   /**
-   * <summary>Computes the squared length of a specified two-dimensional
-   * vector.</summary>
-   *
-   * <returns>The squared length of the two-dimensional vector.</returns>
-   *
-   * <param name="vector">The two-dimensional vector whose squared length
-   * is to be computed.</param>
+   * Computes the squared length of a specified two-dimensional vector.
+   * @param vector The two-dimensional vector whose squared length is to be computed.
+   * @returns The squared length of the two-dimensional vector.
    */
   public static absSq(vector: Vector2): number {
     return Vector2.dot(vector, vector);
   }
 
   /**
-   * <summary>Computes the normalization of the specified two-dimensional
-   * vector.</summary>
-   *
-   * <returns>The normalization of the two-dimensional vector.</returns>
-   *
-   * <param name="vector">The two-dimensional vector whose normalization
-   * is to be computed.</param>
+   * Computes the normalization of the specified two-dimensional vector.
+   * @param vector The two-dimensional vector whose normalization is to be computed.
+   * @returns The normalization of the two-dimensional vector.
    */
   public static normalize(vector: Vector2): Vector2 {
     return Vector2.divide(vector, this.abs(vector));
   }
 
   /**
-   * <summary>Computes the determinant of a two-dimensional square matrix
-   * with rows consisting of the specified two-dimensional vectors.
-   * </summary>
-   *
-   * <returns>The determinant of the two-dimensional square matrix.
-   * </returns>
-   *
-   * <param name="vector1">The top row of the two-dimensional square
-   * matrix.</param>
-   * <param name="vector2">The bottom row of the two-dimensional square
-   * matrix.</param>
+   * Computes the determinant of a two-dimensional square matrix with rows consisting of the specified two-dimensional vectors.
+   * @param vector1 The top row of the two-dimensional square matrix.
+   * @param vector2 The bottom row of the two-dimensional square matrix.
+   * @returns The determinant of the two-dimensional square matrix.
    */
   public static det(vector1: Vector2, vector2: Vector2) {
     return vector1.x * vector2.y - vector1.y * vector2.x;
   }
 
   /**
-   * <summary>Computes the squared distance from a line segment with the
-   * specified endpoints to a specified point.</summary>
-   *
-   * <returns>The squared distance from the line segment to the point.
-   * </returns>
-   *
-   * <param name="vector1">The first endpoint of the line segment.</param>
-   * <param name="vector2">The second endpoint of the line segment.
-   * </param>
-   * <param name="vector3">The point to which the squared distance is to
-   * be calculated.</param>
+   * Computes the squared distance from a line segment with the specified endpoints to a specified point.
+   * @param vector1 The first endpoint of the line segment.
+   * @param vector2 The second endpoint of the line segment.
+   * @param vector3 The point to which the squared distance is to be calculated.
+   * @returns The squared distance from the line segment to the point.
    */
   public static distSqPointLineSegment(vector1: Vector2, vector2: Vector2, vector3: Vector2) {
     let r = Vector2.dot(
@@ -129,51 +104,38 @@ export class RVOMath {
   }
 
   /**
-   * <summary>Computes the absolute value of a float.</summary>
-   *
-   * <returns>The absolute value of the float.</returns>
-   *
-   * <param name="scalar">The float of which to compute the absolute
-   * value.</param>
+   * Computes the absolute value of a float.
+   * @param scalar The float of which to compute the absolute value.
+   * @returns The absolute value of the float.
    */
   public static fabs(scalar: number) {
     return Math.abs(scalar);
   }
 
   /**
-   * <summary>Computes the signed distance from a line connecting the
-   * specified points to a specified point.</summary>
-   *
-   * <returns>Positive when the point c lies to the left of the line ab.
-   * </returns>
-   *
-   * <param name="a">The first point on the line.</param>
-   * <param name="b">The second point on the line.</param>
-   * <param name="c">The point to which the signed distance is to be
-   * calculated.</param>
+   * Computes the signed distance from a line connecting the specified points to a specified point.
+   * @param a The first point on the line.
+   * @param b The second point on the line.
+   * @param c The point to which the signed distance is to be calculated.
+   * @returns Positive when the point c lies to the left of the line ab.
    */
   public static leftOf(a: Vector2, b: Vector2, c: Vector2) {
     return this.det(Vector2.subtract(a, c), Vector2.subtract(b, a));
   }
 
   /**
-   * <summary>Computes the square of a float.</summary>
-   *
-   * <returns>The square of the float.</returns>
-   *
-   * <param name="scalar">The float to be squared.</param>
+   * Computes the square of a float.
+   * @param scalar The float to be squared.
+   * @returns The square of the float.
    */
   public static sqr(scalar: number): number {
     return scalar * scalar;
   }
 
   /**
-   * <summary>Computes the square root of a float.</summary>
-   *
-   * <returns>The square root of the float.</returns>
-   *
-   * <param name="scalar">The float of which to compute the square root.
-   * </param>
+   * Computes the square root of a float.
+   * @param scalar The float of which to compute the square root.
+   * @returns The square root of the float.
    */
   public static sqrt(scalar: number) {
     return Math.sqrt(scalar);

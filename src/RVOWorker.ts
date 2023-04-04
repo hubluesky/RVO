@@ -6,11 +6,10 @@ export class RVOWorker {
   private readonly start_: number;
 
   /**
-   * <summary>Constructs and initializes a worker.</summary>
-   *
-   * <param name="start">Start.</param>
-   * <param name="end">End.</param>
-   * <param name="doneEvent">Done event.</param>
+   * Constructs and initializes a worker.
+   * @param simulator Simulator.
+   * @param start Start.
+   * @param end End.
    */
   constructor(public readonly simulator: Simulator, start: number, end: number) { // , doneEvent: ManualResetEvent) {
     this.start_ = start;
@@ -19,12 +18,11 @@ export class RVOWorker {
   }
 
   /**
-   * <summary>Performs a simulation step.</summary>
-   *
-   * <param name="obj">Unused.</param>
+   * Performs a simulation step.
    */
   public step() {
     for (let agentNo = this.start_; agentNo < this.end_; ++agentNo) {
+      if (this.simulator.agents_[agentNo].isFreeze) continue;
       this.simulator.agents_[agentNo].computeNeighbors();
       this.simulator.agents_[agentNo].computeNewVelocity();
     }
@@ -33,10 +31,7 @@ export class RVOWorker {
   }
 
   /**
-   * <summary>updates the two-dimensional position and
-   * two-dimensional velocity of each agent.</summary>
-   *
-   * <param name="obj">Unused.</param>
+   * updates the two-dimensional position and two-dimensional velocity of each agent.
    */
   public update() {
     for (let agentNo = this.start_; agentNo < this.end_; ++agentNo) {

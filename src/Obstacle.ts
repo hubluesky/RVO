@@ -34,10 +34,9 @@
 import { Vector2 } from "./Vector2";
 
 /**
- * <summary>Defines static obstacles in the simulation.</summary>
+ * Defines static obstacles in the simulation.
  */
 export class Obstacle {
-
   public next_: Obstacle;
   public previous_: Obstacle;
   public direction_: Vector2;

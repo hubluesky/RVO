@@ -38,7 +38,7 @@ import { RVOMath } from "./RVOMath";
 import { Simulator } from "./Simulator";
 
 /**
- * <summary>Defines a node of an agent k-D tree.</summary>
+ * Defines a node of an agent k-D tree.
  */
 class AgentTreeNode {
   public begin_: number;
@@ -53,7 +53,7 @@ class AgentTreeNode {
 
 
 /**
- * <summary>Defines a pair of scalar values.</summary>
+ * Defines a pair of scalar values.
  */
 class FloatPair {
   /**
@@ -124,7 +124,7 @@ class FloatPair {
 }
 
 /**
- * <summary>Defines a node of an obstacle k-D tree.</summary>
+ * Defines a node of an obstacle k-D tree.
  */
 class ObstacleTreeNode {
   public obstacle_: Obstacle;
@@ -134,13 +134,12 @@ class ObstacleTreeNode {
 
 
 /**
- * <summary>Defines k-D trees for agents and static obstacles in the
- * simulation.</summary>
+ * Defines k-D trees for agents and static obstacles in the simulation.
  */
 export class KdTree {
 
   /**
-   * <summary>The maximum size of an agent k-D tree leaf.</summary>
+   * The maximum size of an agent k-D tree leaf.
    */
   private readonly MAX_LEAF_SIZE = 10;
 
@@ -151,7 +150,7 @@ export class KdTree {
   public constructor(public readonly simulator: Simulator) { }
 
   /**
-   * <summary>Builds an agent k-D tree.</summary>
+   * Builds an agent k-D tree.
    */
   public buildAgentTree() {
     if (this.agents_ === null || this.agents_.length != this.simulator.agents_.length) {
@@ -174,7 +173,7 @@ export class KdTree {
   }
 
   /**
-   * <summary>Builds an obstacle k-D tree.</summary>
+   * Builds an obstacle k-D tree.
    */
   public buildObstacleTree() {
     this.obstacleTree_ = new ObstacleTreeNode();
@@ -189,54 +188,39 @@ export class KdTree {
   }
 
   /**
-   * <summary>Computes the agent neighbors of the specified agent.
-   * </summary>
-   *
-   * <param name="agent">The agent for which agent neighbors are to be
-   * computed.</param>
-   * <param name="rangeSq">The squared range around the agent.</param>
+   * Computes the agent neighbors of the specified agent.
+   * @param agent The agent for which agent neighbors are to be computed.
+   * @param rangeSq The squared range around the agent.
    */
   public computeAgentNeighbors(agent: Agent, rangeSq: number) {
     this.queryAgentTreeRecursive(agent, rangeSq, 0);
   }
 
   /**
-   * <summary>Computes the obstacle neighbors of the specified agent.
-   * </summary>
-   *
-   * <param name="agent">The agent for which obstacle neighbors are to be
-   * computed.</param>
-   * <param name="rangeSq">The squared range around the agent.</param>
+   * Computes the obstacle neighbors of the specified agent.
+   * @param agent The agent for which obstacle neighbors are to be computed.
+   * @param rangeSq The squared range around the agent.
    */
   public computeObstacleNeighbors(agent: Agent, rangeSq: number) {
     this.queryObstacleTreeRecursive(agent, rangeSq, this.obstacleTree_);
   }
 
   /**
-   * <summary>Queries the visibility between two points within a specified
-   * radius.</summary>
-   *
-   * <returns>True if q1 and q2 are mutually visible within the radius;
-   * false otherwise.</returns>
-   *
-   * <param name="q1">The first point between which visibility is to be
-   * tested.</param>
-   * <param name="q2">The second point between which visibility is to be
-   * tested.</param>
-   * <param name="radius">The radius within which visibility is to be
-   * tested.</param>
+   * Queries the visibility between two points within a specified radius.
+   * @param q1 The first point between which visibility is to be tested.
+   * @param q2 The second point between which visibility is to be tested.
+   * @param radius The radius within which visibility is to be tested.
+   * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
    */
   public queryVisibility(q1: Vector2, q2: Vector2, radius: number) {
     return this.queryVisibilityRecursive(q1, q2, radius, this.obstacleTree_);
   }
 
   /**
-   * <summary>Recursive method for building an agent k-D tree.</summary>
-   *
-   * <param name="begin">The beginning agent k-D tree node node index.
-   * </param>
-   * <param name="end">The ending agent k-D tree node index.</param>
-   * <param name="node">The current agent k-D tree node index.</param>
+   * Recursive method for building an agent k-D tree.
+   * @param begin The beginning agent k-D tree node node index.
+   * @param end The ending agent k-D tree node index.
+   * @param node The current agent k-D tree node index.
    */
   private buildAgentTreeRecursive(begin: number, end: number, node: number) {
     this.agentTree_[node].begin_ = begin;
@@ -293,12 +277,9 @@ export class KdTree {
   }
 
   /**
-   * <summary>Recursive method for building an obstacle k-D tree.
-   * </summary>
-   *
-   * <returns>An obstacle k-D tree node.</returns>
-   *
-   * <param name="obstacles">A list of obstacles.</param>
+   * Recursive method for building an obstacle k-D tree.
+   * @param obstacles A list of obstacles.
+   * @returns An obstacle k-D tree node.
    */
   private buildObstacleTreeRecursive(obstacles: Obstacle[]): ObstacleTreeNode {
     if (obstacles.length === 0) {
@@ -450,13 +431,10 @@ export class KdTree {
   }
 
   /**
-   * <summary>Recursive method for computing the agent neighbors of the
-   * specified agent.</summary>
-   *
-   * <param name="agent">The agent for which agent neighbors are to be
-   * computed.</param>
-   * <param name="rangeSq">The squared range around the agent.</param>
-   * <param name="node">The current agent k-D tree node index.</param>
+   * Recursive method for computing the agent neighbors of the specified agent.
+   * @param agent The agent for which agent neighbors are to be computed.
+   * @param rangeSq The squared range around the agent.
+   * @param node The current agent k-D tree node index.
    */
   private queryAgentTreeRecursive(agent: Agent, rangeSq: number, node: number) {
     if (this.agentTree_[node].end_ - this.agentTree_[node].begin_ <= this.MAX_LEAF_SIZE) {
@@ -491,13 +469,10 @@ export class KdTree {
   }
 
   /**
-   * <summary>Recursive method for computing the obstacle neighbors of the
-   * specified agent.</summary>
-   *
-   * <param name="agent">The agent for which obstacle neighbors are to be
-   * computed.</param>
-   * <param name="rangeSq">The squared range around the agent.</param>
-   * <param name="node">The current obstacle k-D node.</param>
+   * Recursive method for computing the obstacle neighbors of the specified agent.
+   * @param agent The agent for which obstacle neighbors are to be computed.
+   * @param rangeSq The squared range around the agent.
+   * @param node The current obstacle k-D node.
    */
   private queryObstacleTreeRecursive(agent: Agent, rangeSq: number, node?: ObstacleTreeNode) {
     if (node != null) {
@@ -526,19 +501,12 @@ export class KdTree {
   }
 
   /**
-   * <summary>Recursive method for querying the visibility between two
-   * points within a specified radius.</summary>
-   *
-   * <returns>True if q1 and q2 are mutually visible within the radius;
-   * false otherwise.</returns>
-   *
-   * <param name="q1">The first point between which visibility is to be
-   * tested.</param>
-   * <param name="q2">The second point between which visibility is to be
-   * tested.</param>
-   * <param name="radius">The radius within which visibility is to be
-   * tested.</param>
-   * <param name="node">The current obstacle k-D node.</param>
+   * Recursive method for querying the visibility between two points within a specified radius.
+   * @param q1 The first point between which visibility is to be tested.
+   * @param q2 The second point between which visibility is to be tested.
+   * @param radius The radius within which visibility is to be tested.
+   * @param node The current obstacle k-D node.
+   * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
    */
   private queryVisibilityRecursive(q1: Vector2, q2: Vector2, radius: number, node: ObstacleTreeNode): boolean {
     if (node == null) {

@@ -41,13 +41,9 @@ import { Vector2 } from "./Vector2";
 
 
 /**
- * <summary>Defines the simulation.</summary>
+ * Defines the simulation.
  */
 export class Simulator {
-  /**
-   * <summary>Defines a worker.</summary>
-   */
-
   public agents_: Agent[];
   public obstacles_: Obstacle[];
   public kdTree_: KdTree;
@@ -59,10 +55,8 @@ export class Simulator {
   private numWorkers_: number;
   private globalTime_: number;
 
-  public static readonly Instance: Simulator = new Simulator();
-
   /**
-   * <summary>Constructs and initializes a simulation.</summary>
+   * Constructs and initializes a simulation.
    */
   constructor() {
     this.clear();
@@ -70,38 +64,31 @@ export class Simulator {
   }
 
   /**
-   * <summary>Adds a new agent to the simulation.</summary>
-   *
-   * <returns>The number of the agent.</returns>
-   *
-   * <param name="position">The two-dimensional starting position of this
-   * agent.</param>
-   * <param name="neighborDist">The maximum distance (center point to
+   * Adds a new agent to the simulation.
+   * @param position The two-dimensional starting position of this agent.
+   * @param neighborDist The maximum distance (center point to
    * center point) to other agents this agent takes into account in the
    * navigation. The larger this number, the longer the running time of
    * the simulation. If the number is too low, the simulation will not be
-   * safe. Must be non-negative.</param>
-   * <param name="maxNeighbors">The maximum number of other agents this
+   * safe. Must be non-negative.
+   * @param maxNeighbors The maximum number of other agents this
    * agent takes into account in the navigation. The larger this number,
    * the longer the running time of the simulation. If the number is too
-   * low, the simulation will not be safe.</param>
-   * <param name="timeHorizon">The minimal amount of time for which this
+   * low, the simulation will not be safe.
+   * @param timeHorizon The minimal amount of time for which this
    * agent's velocities that are computed by the simulation are safe with
    * respect to other agents. The larger this number, the sooner this
    * agent will respond to the presence of other agents, but the less
    * freedom this agent has in choosing its velocities. Must be positive.
-   * </param>
-   * <param name="timeHorizonObst">The minimal amount of time for which
+   * @param timeHorizonObst The minimal amount of time for which
    * this agent's velocities that are computed by the simulation are safe
    * with respect to obstacles. The larger this number, the sooner this
    * agent will respond to the presence of obstacles, but the less freedom
-   * this agent has in choosing its velocities. Must be positive.</param>
-   * <param name="radius">The radius of this agent. Must be non-negative.
-   * </param>
-   * <param name="maxSpeed">The maximum speed of this agent. Must be
-   * non-negative.</param>
-   * <param name="velocity">The initial two-dimensional linear velocity of
-   * this agent.</param>
+   * this agent has in choosing its velocities. Must be positive.
+   * @param radius The radius of this agent. Must be non-negative.
+   * @param maxSpeed The maximum speed of this agent. Must be non-negative.
+   * @param velocity The initial two-dimensional linear velocity of this agent.
+   * @returns The number of the agent.
    */
   public addAgent(position: Vector2,
     neighborDist: number = this.defaultAgent_.neighborDist_,
@@ -128,17 +115,11 @@ export class Simulator {
   }
 
   /**
-   * <summary>Adds a new obstacle to the simulation.</summary>
-   *
-   * <returns>The number of the first vertex of the obstacle, or -1 when
-   * the number of vertices is less than two.</returns>
-   *
-   * <param name="vertices">List of the vertices of the polygonal obstacle
-   * in counterclockwise order.</param>
-   *
-   * <remarks>To add a "negative" obstacle, e.g. a bounding polygon around
+   * Adds a new obstacle to the simulation.
+   * To add a "negative" obstacle, e.g. a bounding polygon around
    * the environment, the vertices should be listed in clockwise order.
-   * </remarks>
+   * @param vertices List of the vertices of the polygonal obstacle in counterclockwise order.
+   * @returns The number of the first vertex of the obstacle, or -1 when the number of vertices is less than two.
    */
   public addObstacle(vertices: Vector2[]) {
     if (vertices.length < 2) {
@@ -178,7 +159,7 @@ export class Simulator {
   }
 
   /**
-   * <summary>Clears the simulation.</summary>
+   * Clears the simulation.
    */
   public clear() {
     this.agents_ = [];
@@ -191,10 +172,9 @@ export class Simulator {
   }
 
   /**
-   * <summary>Performs a simulation step and updates the two-dimensional
-   * position and two-dimensional velocity of each agent.</summary>
-   *
-   * <returns>The global time after the simulation step.</returns>
+   * Performs a simulation step and updates the two-dimensional
+   * position and two-dimensional velocity of each agent.
+   * @returns The global time after the simulation step.
    */
   public doStep() {
     if (this.workers_ == null) {
@@ -231,349 +211,257 @@ export class Simulator {
   }
 
   /**
-   * <summary>Returns the specified agent neighbor of the specified agent.
-   * </summary>
-   *
-   * <returns>The number of the neighboring agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose agent neighbor is
-   * to be retrieved.</param>
-   * <param name="neighborNo">The number of the agent neighbor to be
-   * retrieved.</param>
+   * Returns the specified agent neighbor of the specified agent.
+   * @param agentNo The number of the agent whose agent neighbor is to be retrieved.
+   * @param neighborNo The number of the agent neighbor to be retrieved.
+   * @returns The number of the neighboring agent.
    */
   public getAgentAgentNeighbor(agentNo: number, neighborNo: number) {
     return this.agents_[agentNo].agentNeighbors_[neighborNo][1].id_;
   }
 
   /**
-   * <summary>Returns the maximum neighbor count of a specified agent.
-   * </summary>
-   *
-   * <returns>The present maximum neighbor count of the agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose maximum neighbor
-   * count is to be retrieved.</param>
+   * Returns the maximum neighbor count of a specified agent.
+   * @param agentNo The number of the agent whose maximum neighbor count is to be retrieved.
+   * @returns The present maximum neighbor count of the agent.
    */
   public getAgentMaxNeighbors(agentNo: number) {
     return this.agents_[agentNo].maxNeighbors_;
   }
 
   /**
-   * <summary>Returns the maximum speed of a specified agent.</summary>
-   *
-   * <returns>The present maximum speed of the agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose maximum speed is
-   * to be retrieved.</param>
+   * Returns the maximum speed of a specified agent.
+   * @param agentNo The number of the agent whose maximum speed is to be retrieved.
+   * @returns The present maximum speed of the agent.
    */
   public getAgentMaxSpeed(agentNo: number) {
     return this.agents_[agentNo].maxSpeed_;
   }
 
   /**
-   * <summary>Returns the maximum neighbor distance of a specified agent.
-   * </summary>
-   *
-   * <returns>The present maximum neighbor distance of the agent.
-   * </returns>
-   *
-   * <param name="agentNo">The number of the agent whose maximum neighbor
-   * distance is to be retrieved.</param>
+   * Returns the maximum neighbor distance of a specified agent.
+   * @param agentNo The number of the agent whose maximum neighbor distance is to be retrieved.
+   * @returns The present maximum neighbor distance of the agent.
    */
   public getAgentNeighborDist(agentNo: number) {
     return this.agents_[agentNo].neighborDist_;
   }
 
   /**
-   * <summary>Returns the count of agent neighbors taken into account to
-   * compute the current velocity for the specified agent.</summary>
-   *
-   * <returns>The count of agent neighbors taken into account to compute
-   * the current velocity for the specified agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose count of agent
-   * neighbors is to be retrieved.</param>
+   * Returns the count of agent neighbors taken into account to
+   * compute the current velocity for the specified agent.
+   * @param agentNo The number of the agent whose count of agent neighbors is to be retrieved.
+   * @returns The count of agent neighbors taken into account to compute
+   * the current velocity for the specified agent.
    */
   public getAgentNumAgentNeighbors(agentNo: number) {
     return this.agents_[agentNo].agentNeighbors_.length;
   }
 
   /**
-   * <summary>Returns the count of obstacle neighbors taken into account
-   * to compute the current velocity for the specified agent.</summary>
-   *
-   * <returns>The count of obstacle neighbors taken into account to
-   * compute the current velocity for the specified agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose count of obstacle
-   * neighbors is to be retrieved.</param>
+   * Returns the count of obstacle neighbors taken into account
+   * to compute the current velocity for the specified agent.
+   * @param agentNo The number of the agent whose count of obstacle neighbors is to be retrieved.
+   * @returns The count of obstacle neighbors taken into account to
+   * compute the current velocity for the specified agent.
    */
   public getAgentNumObstacleNeighbors(agentNo: number) {
     return this.agents_[agentNo].obstacleNeighbors_.length;
   }
 
   /**
-   * <summary>Returns the specified obstacle neighbor of the specified
-   * agent.</summary>
-   *
-   * <returns>The number of the first vertex of the neighboring obstacle
-   * edge.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose obstacle neighbor
-   * is to be retrieved.</param>
-   * <param name="neighborNo">The number of the obstacle neighbor to be
-   * retrieved.</param>
+   * Returns the specified obstacle neighbor of the specified
+   * agent.
+   * @param agentNo The number of the agent whose obstacle neighbor is to be retrieved.
+   * @param neighborNo The number of the obstacle neighbor to be retrieved.
+   * @returns The number of the first vertex of the neighboring obstacle
+   * edge.
    */
   public getAgentObstacleNeighbor(agentNo: number, neighborNo: number) {
     return this.agents_[agentNo].obstacleNeighbors_[neighborNo][1].id_;
   }
 
   /**
-   * <summary>Returns the ORCA constraints of the specified agent.
-   * </summary>
-   *
-   * <returns>A list of lines representing the ORCA constraints.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose ORCA constraints
-   * are to be retrieved.</param>
-   *
-   * <remarks>The halfplane to the left of each line is the region of
+   * Returns the ORCA constraints of the specified agent.
+   * The halfplane to the left of each line is the region of
    * permissible velocities with respect to that ORCA constraint.
-   * </remarks>
+   * @param agentNo The number of the agent whose ORCA constraints
+   * are to be retrieved.
+   * @returns A list of lines representing the ORCA constraints.
    */
   public getAgentOrcaLines(agentNo: number): Line[] {
     return this.agents_[agentNo].orcaLines_;
   }
 
   /**
-   * <summary>Returns the two-dimensional position of a specified agent.
-   * </summary>
-   *
-   * <returns>The present two-dimensional position of the (center of the)
-   * agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose two-dimensional
-   * position is to be retrieved.</param>
+   * Returns the two-dimensional position of a specified agent.
+   * @param agentNo The number of the agent whose two-dimensional position is to be retrieved.
+   * @returns The present two-dimensional position of the (center of the) agent.
    */
   public getAgentPosition(agentNo: number): Vector2 {
     return this.agents_[agentNo].position_;
   }
 
   /**
-   * <summary>Returns the two-dimensional preferred velocity of a
-   * specified agent.</summary>
-   *
-   * <returns>The present two-dimensional preferred velocity of the agent.
-   * </returns>
-   *
-   * <param name="agentNo">The number of the agent whose two-dimensional
-   * preferred velocity is to be retrieved.</param>
+   * Returns the two-dimensional preferred velocity of a specified agent.
+   * @param agentNo The number of the agent whose two-dimensional preferred velocity is to be retrieved.
+   * @returns The present two-dimensional preferred velocity of the agent.
    */
   public getAgentPrefVelocity(agentNo: number): Vector2 {
     return this.agents_[agentNo].prefVelocity_;
   }
 
   /**
-   * <summary>Returns the radius of a specified agent.</summary>
-   *
-   * <returns>The present radius of the agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose radius is to be
-   * retrieved.</param>
+   * Returns the radius of a specified agent.
+   * @param agentNo The number of the agent whose radius is to be retrieved.
+   * @returns The present radius of the agent.
    */
   public getAgentRadius(agentNo: number) {
     return this.agents_[agentNo].radius_;
   }
 
   /**
-   * <summary>Returns the time horizon of a specified agent.</summary>
-   *
-   * <returns>The present time horizon of the agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose time horizon is
-   * to be retrieved.</param>
+   * Returns the time horizon of a specified agent.
+   * @param agentNo The number of the agent whose time horizon is to be retrieved.
+   * @returns The present time horizon of the agent.
    */
   public getAgentTimeHorizon(agentNo: number) {
     return this.agents_[agentNo].timeHorizon_;
   }
 
   /**
-   * <summary>Returns the time horizon with respect to obstacles of a
-   * specified agent.</summary>
-   *
-   * <returns>The present time horizon with respect to obstacles of the
-   * agent.</returns>
-   *
-   * <param name="agentNo">The number of the agent whose time horizon with
-   * respect to obstacles is to be retrieved.</param>
+   * Returns the time horizon with respect to obstacles of a specified agent.
+   * @param agentNo The number of the agent whose time horizon with respect to obstacles is to be retrieved.
+   * @returns The present time horizon with respect to obstacles of the agent.
    */
   public getAgentTimeHorizonObst(agentNo: number) {
     return this.agents_[agentNo].timeHorizonObst_;
   }
 
   /**
-   * <summary>Returns the two-dimensional linear velocity of a specified
-   * agent.</summary>
-   *
-   * <returns>The present two-dimensional linear velocity of the agent.
-   * </returns>
-   *
-   * <param name="agentNo">The number of the agent whose two-dimensional
-   * linear velocity is to be retrieved.</param>
+   * Returns the two-dimensional linear velocity of a specified agent.
+   * @param agentNo The number of the agent whose two-dimensional linear velocity is to be retrieved.
+   * @returns The present two-dimensional linear velocity of the agent.
    */
   public getAgentVelocity(agentNo: number): Vector2 {
     return this.agents_[agentNo].velocity_;
   }
 
   /**
-   * <summary>Returns the global time of the simulation.</summary>
-   *
-   * <returns>The present global time of the simulation (zero initially).
-   * </returns>
+   * Returns the global time of the simulation.
+   * @returns The present global time of the simulation (zero initially).
    */
   public getGlobalTime() {
     return this.globalTime_;
   }
 
   /**
-   * <summary>Returns the count of agents in the simulation.</summary>
-   *
-   * <returns>The count of agents in the simulation.</returns>
+   * Returns the count of agents in the simulation.
+   * @returns The count of agents in the simulation.
    */
   public getNumAgents() {
     return this.agents_.length;
   }
 
   /**
-   * <summary>Returns the count of obstacle vertices in the simulation.
-   * </summary>
-   *
-   * <returns>The count of obstacle vertices in the simulation.</returns>
+   * Returns the count of obstacle vertices in the simulation.
+   * @returns The count of obstacle vertices in the simulation.
    */
   public getNumObstacleVertices() {
     return this.obstacles_.length;
   }
 
   /**
-   * <summary>Returns the count of workers.</summary>
-   *
-   * <returns>The count of workers.</returns>
+   * Returns the count of workers.
+   * @returns The count of workers.
    */
-  public GetNumWorkers() {
+  public getNumWorkers() {
     return this.numWorkers_;
   }
 
   /**
-   * <summary>Returns the two-dimensional position of a specified obstacle
-   * vertex.</summary>
-   *
-   * <returns>The two-dimensional position of the specified obstacle
-   * vertex.</returns>
-   *
-   * <param name="vertexNo">The number of the obstacle vertex to be
-   * retrieved.</param>
+   * Returns the two-dimensional position of a specified obstacle vertex.
+   * @param vertexNo The number of the obstacle vertex to be retrieved.
+   * @returns The two-dimensional position of the specified obstacle vertex.
    */
   public getObstacleVertex(vertexNo: number): Vector2 {
     return this.obstacles_[vertexNo].point_;
   }
 
   /**
-   * <summary>Returns the number of the obstacle vertex succeeding the
-   * specified obstacle vertex in its polygon.</summary>
-   *
-   * <returns>The number of the obstacle vertex succeeding the specified
-   * obstacle vertex in its polygon.</returns>
-   *
-   * <param name="vertexNo">The number of the obstacle vertex whose
-   * successor is to be retrieved.</param>
+   * Returns the number of the obstacle vertex succeeding the specified obstacle vertex in its polygon.
+   * @param vertexNo The number of the obstacle vertex whose successor is to be retrieved.
+   * @returns The number of the obstacle vertex succeeding the specified obstacle vertex in its polygon.
    */
   public getNextObstacleVertexNo(vertexNo: number) {
     return this.obstacles_[vertexNo].next_.id_;
   }
 
   /**
-   * <summary>Returns the number of the obstacle vertex preceding the
-   * specified obstacle vertex in its polygon.</summary>
-   *
-   * <returns>The number of the obstacle vertex preceding the specified
-   * obstacle vertex in its polygon.</returns>
-   *
-   * <param name="vertexNo">The number of the obstacle vertex whose
-   * predecessor is to be retrieved.</param>
+   * Returns the number of the obstacle vertex preceding the specified obstacle vertex in its polygon.
+   * @param vertexNo The number of the obstacle vertex whose predecessor is to be retrieved.
+   * @returns The number of the obstacle vertex preceding the specified obstacle vertex in its polygon.
    */
   public getPrevObstacleVertexNo(vertexNo: number) {
     return this.obstacles_[vertexNo].previous_.id_;
   }
 
   /**
-   * <summary>Returns the time step of the simulation.</summary>
-   *
-   * <returns>The present time step of the simulation.</returns>
+   * Returns the time step of the simulation.
+   * @returns The present time step of the simulation.
    */
   public getTimeStep() {
     return this.timeStep_;
   }
 
   /**
-   * <summary>Processes the obstacles that have been added so that they
-   * are accounted for in the simulation.</summary>
-   *
-   * <remarks>Obstacles added to the simulation after this function has
-   * been called are not accounted for in the simulation.</remarks>
+   * Processes the obstacles that have been added so that they are accounted for in the simulation.
+   * Obstacles added to the simulation after this function has been called are not accounted for in the simulation.
    */
   public processObstacles() {
     this.kdTree_.buildObstacleTree();
   }
 
   /**
-   * <summary>Performs a visibility query between the two specified points
-   * with respect to the obstacles.</summary>
-   *
-   * <returns>A boolean specifying whether the two points are mutually
-   * visible. Returns true when the obstacles have not been processed.
-   * </returns>
-   *
-   * <param name="point1">The first point of the query.</param>
-   * <param name="point2">The second point of the query.</param>
-   * <param name="radius">The minimal distance between the line connecting
+   * Performs a visibility query between the two specified points with respect to the obstacles.
+   * @param point1 The first point of the query.
+   * @param point2 The second point of the query.
+   * @param radius The minimal distance between the line connecting
    * the two points and the obstacles in order for the points to be
-   * mutually visible (optional). Must be non-negative.</param>
+   * mutually visible (optional). Must be non-negative.
+   * @returns A boolean specifying whether the two points are mutually
+   * visible. Returns true when the obstacles have not been processed.
    */
   public queryVisibility(point1: Vector2, point2: Vector2, radius: number) {
     return this.kdTree_.queryVisibility(point1, point2, radius);
   }
 
   /**
-   * <summary>Sets the default properties for any new agent that is added.
-   * </summary>
-   *
-   * <param name="neighborDist">The default maximum distance (center point
+   * Sets the default properties for any new agent that is added.
+   * @param neighborDist The default maximum distance (center point
    * to center point) to other agents a new agent takes into account in
    * the navigation. The larger this number, the longer he running time of
    * the simulation. If the number is too low, the simulation will not be
-   * safe. Must be non-negative.</param>
-   * <param name="maxNeighbors">The default maximum number of other agents
+   * safe. Must be non-negative.
+   * @param maxNeighbors The default maximum number of other agents
    * a new agent takes into account in the navigation. The larger this
    * number, the longer the running time of the simulation. If the number
-   * is too low, the simulation will not be safe.</param>
-   * <param name="timeHorizon">The default minimal amount of time for
+   * is too low, the simulation will not be safe.
+   * @param timeHorizon The default minimal amount of time for
    * which a new agent's velocities that are computed by the simulation
    * are safe with respect to other agents. The larger this number, the
    * sooner an agent will respond to the presence of other agents, but the
    * less freedom the agent has in choosing its velocities. Must be
-   * positive.</param>
-   * <param name="timeHorizonObst">The default minimal amount of time for
+   * positive.
+   * @param timeHorizonObst The default minimal amount of time for
    * which a new agent's velocities that are computed by the simulation
    * are safe with respect to obstacles. The larger this number, the
    * sooner an agent will respond to the presence of obstacles, but the
    * less freedom the agent has in choosing its velocities. Must be
-   * positive.</param>
-   * <param name="radius">The default radius of a new agent. Must be
-   * non-negative.</param>
-   * <param name="maxSpeed">The default maximum speed of a new agent. Must
-   * be non-negative.</param>
-   * <param name="velocity">The default initial two-dimensional linear
-   * velocity of a new agent.</param>
+   * positive.
+   * @param radius The default radius of a new agent. Must be non-negative.
+   * @param maxSpeed The default maximum speed of a new agent. Must be non-negative.
+   * @param velocity The default initial two-dimensional linear velocity of a new agent.
    */
   public setAgentDefaults(neighborDist: number, maxNeighbors: number, timeHorizon: number, timeHorizonObst: number, radius: number, maxSpeed: number, velocity: Vector2) {
     if (this.defaultAgent_ == null) {
@@ -590,133 +478,97 @@ export class Simulator {
   }
 
   /**
-   * <summary>Sets the maximum neighbor count of a specified agent.
-   * </summary>
-   *
-   * <param name="agentNo">The number of the agent whose maximum neighbor
-   * count is to be modified.</param>
-   * <param name="maxNeighbors">The replacement maximum neighbor count.
-   * </param>
+   * Sets the maximum neighbor count of a specified agent.
+   * @param agentNo The number of the agent whose maximum neighbor count is to be modified.
+   * @param maxNeighbors The replacement maximum neighbor count.
    */
   public setAgentMaxNeighbors(agentNo: number, maxNeighbors: number) {
     this.agents_[agentNo].maxNeighbors_ = maxNeighbors;
   }
 
   /**
-   * <summary>Sets the maximum speed of a specified agent.</summary>
-   *
-   * <param name="agentNo">The number of the agent whose maximum speed is
-   * to be modified.</param>
-   * <param name="maxSpeed">The replacement maximum speed. Must be
-   * non-negative.</param>
+   * Sets the maximum speed of a specified agent.
+   * @param agentNo The number of the agent whose maximum speed is to be modified.
+   * @param maxSpeed The replacement maximum speed. Must be non-negative.
    */
   public setAgentMaxSpeed(agentNo: number, maxSpeed: number) {
     this.agents_[agentNo].maxSpeed_ = maxSpeed;
   }
 
   /**
-   * <summary>Sets the maximum neighbor distance of a specified agent.
-   * </summary>
-   *
-   * <param name="agentNo">The number of the agent whose maximum neighbor
-   * distance is to be modified.</param>
-   * <param name="neighborDist">The replacement maximum neighbor distance.
-   * Must be non-negative.</param>
+   * Sets the maximum neighbor distance of a specified agent.
+   * @param agentNo The number of the agent whose maximum neighbor distance is to be modified.
+   * @param neighborDist The replacement maximum neighbor distance. Must be non-negative.
    */
   public setAgentNeighborDist(agentNo: number, neighborDist: number) {
     this.agents_[agentNo].neighborDist_ = neighborDist;
   }
 
   /**
-   * <summary>Sets the two-dimensional position of a specified agent.
-   * </summary>
-   *
-   * <param name="agentNo">The number of the agent whose two-dimensional
-   * position is to be modified.</param>
-   * <param name="position">The replacement of the two-dimensional
-   * position.</param>
+   * Sets the two-dimensional position of a specified agent.
+   * @param agentNo The number of the agent whose two-dimensional position is to be modified.
+   * @param position The replacement of the two-dimensional position.
    */
   public setAgentPosition(agentNo: number, position: Vector2) {
     this.agents_[agentNo].position_ = position;
   }
 
   /**
-   * <summary>Sets the two-dimensional preferred velocity of a specified
-   * agent.</summary>
-   *
-   * <param name="agentNo">The number of the agent whose two-dimensional
-   * preferred velocity is to be modified.</param>
-   * <param name="prefVelocity">The replacement of the two-dimensional
-   * preferred velocity.</param>
+   * Sets the two-dimensional preferred velocity of a specified agent.
+   * @param agentNo The number of the agent whose two-dimensional preferred velocity is to be modified.
+   * @param prefVelocity The replacement of the two-dimensional preferred velocity.
    */
   public setAgentPrefVelocity(agentNo: number, prefVelocity: Vector2) {
     this.agents_[agentNo].prefVelocity_ = prefVelocity;
   }
 
   /**
-   * <summary>Sets the radius of a specified agent.</summary>
-   *
-   * <param name="agentNo">The number of the agent whose radius is to be
-   * modified.</param>
-   * <param name="radius">The replacement radius. Must be non-negative.
-   * </param>
+   * Sets the radius of a specified agent.
+   * @param agentNo The number of the agent whose radius is to be modified.
+   * @param radius The replacement radius. Must be non-negative.
    */
   public setAgentRadius(agentNo: number, radius: number) {
     this.agents_[agentNo].radius_ = radius;
   }
 
   /**
-   * <summary>Sets the time horizon of a specified agent with respect to
-   * other agents.</summary>
-   *
-   * <param name="agentNo">The number of the agent whose time horizon is
-   * to be modified.</param>
-   * <param name="timeHorizon">The replacement time horizon with respect
-   * to other agents. Must be positive.</param>
+   * Sets the time horizon of a specified agent with respect to other agents.
+   * @param agentNo The number of the agent whose time horizon is to be modified.
+   * @param timeHorizon The replacement time horizon with respect to other agents. Must be positive.
    */
   public setAgentTimeHorizon(agentNo: number, timeHorizon: number) {
     this.agents_[agentNo].timeHorizon_ = timeHorizon;
   }
 
   /**
-   * <summary>Sets the time horizon of a specified agent with respect to
-   * obstacles.</summary>
-   *
-   * <param name="agentNo">The number of the agent whose time horizon with
-   * respect to obstacles is to be modified.</param>
-   * <param name="timeHorizonObst">The replacement time horizon with
-   * respect to obstacles. Must be positive.</param>
+   * Sets the time horizon of a specified agent with respect to obstacles.
+   * @param agentNo The number of the agent whose time horizon with respect to obstacles is to be modified.
+   * @param timeHorizonObst The replacement time horizon with respect to obstacles. Must be positive.
    */
   public setAgentTimeHorizonObst(agentNo: number, timeHorizonObst: number) {
     this.agents_[agentNo].timeHorizonObst_ = timeHorizonObst;
   }
 
   /**
-   * <summary>Sets the two-dimensional linear velocity of a specified
-   * agent.</summary>
-   *
-   * <param name="agentNo">The number of the agent whose two-dimensional
-   * linear velocity is to be modified.</param>
-   * <param name="velocity">The replacement two-dimensional linear
-   * velocity.</param>
+   * Sets the two-dimensional linear velocity of a specified agent.
+   * @param agentNo The number of the agent whose two-dimensional linear velocity is to be modified.
+   * @param velocity The replacement two-dimensional linear velocity.
    */
   public setAgentVelocity(agentNo: number, velocity: Vector2) {
     this.agents_[agentNo].velocity_ = velocity;
   }
 
   /**
-   * <summary>Sets the global time of the simulation.</summary>
-   *
-   * <param name="globalTime">The global time of the simulation.</param>
+   * Sets the global time of the simulation.
+   * @param globalTime The global time of the simulation.
    */
   public setGlobalTime(globalTime: number) {
     this.globalTime_ = globalTime;
   }
 
   /**
-   * <summary>Sets the number of workers.</summary>
-   *
-   * <param name="numWorkers">The number of workers.</param>
+   * Sets the number of workers.
+   * @param numWorkers The number of workers.
    */
   public setNumWorkers(numWorkers: number) {
     this.numWorkers_ = numWorkers;
@@ -728,13 +580,10 @@ export class Simulator {
   }
 
   /**
-   * <summary>Sets the time step of the simulation.</summary>
-   *
-   * <param name="timeStep">The time step of the simulation. Must be
-   * positive.</param>
+   * Sets the time step of the simulation.
+   * @param timeStep The time step of the simulation. Must be positive.
    */
   public setTimeStep(timeStep: number) {
     this.timeStep_ = timeStep;
   }
-
 }

@@ -38,12 +38,12 @@ import { Simulator } from "./Simulator";
 import { Vector2 } from "./Vector2";
 
 /**
- * <summary>Defines an agent in the simulation.</summary>
+ * Defines an agent in the simulation.
  */
 export class Agent {
   public agentNeighbors_: [number, Agent][] = [];
   public obstacleNeighbors_: [number, Obstacle][] = [];
-  public orcaLines_: Line[] = [];
+  public readonly orcaLines_: Line[] = [];
   public position_: Vector2 = new Vector2(0, 0);
   public prefVelocity_: Vector2 = new Vector2(0, 0);
   public velocity_: Vector2 = new Vector2(0, 0);
@@ -56,11 +56,12 @@ export class Agent {
   public radius_ = 0.0;
   public timeHorizon_ = 0.0;
   public timeHorizonObst_ = 0.0;
+  public isFreeze: boolean = false;
 
   public constructor(public readonly simulator: Simulator) { }
 
   /**
-   * <summary>Computes the neighbors of this agent.</summary>
+   * Computes the neighbors of this agent.
    */
   public computeNeighbors() {
     this.obstacleNeighbors_ = [];
@@ -76,10 +77,10 @@ export class Agent {
   }
 
   /**
-   * <summary>Computes the new velocity of this agent.</summary>
+   * Computes the new velocity of this agent.
    */
   public computeNewVelocity() {
-    this.orcaLines_ = [];
+    this.orcaLines_.length = 0;
 
     const invTimeHorizonObst = 1.0 / this.timeHorizonObst_;
 
@@ -140,8 +141,7 @@ export class Agent {
         }
 
         continue;
-      }
-      else if (s > 1.0 && distSq2 <= radiusSq) {
+      } else if (s > 1.0 && distSq2 <= radiusSq) {
         /*
          * Collision with right vertex. Ignore if non-convex or if
          * it will be taken care of by neighboring obstacle.
@@ -153,8 +153,7 @@ export class Agent {
         }
 
         continue;
-      }
-      else if (s >= 0.0 && s <= 1.0 && distSqLine <= radiusSq) {
+      } else if (s >= 0.0 && s <= 1.0 && distSqLine <= radiusSq) {
         /* Collision with obstacle segment. */
         line.point = new Vector2(0.0, 0.0);
         line.direction = Vector2.negate(obstacle1.direction_);
@@ -187,8 +186,7 @@ export class Agent {
         const leg1 = RVOMath.sqrt(distSq1 - radiusSq);
         leftLegDirection = Vector2.divide(new Vector2(relativePosition1.x * leg1 - relativePosition1.y * this.radius_, relativePosition1.x * this.radius_ + relativePosition1.y * leg1), distSq1);
         rightLegDirection = Vector2.divide(new Vector2(relativePosition1.x * leg1 + relativePosition1.y * this.radius_, -relativePosition1.x * this.radius_ + relativePosition1.y * leg1), distSq1);
-      }
-      else if (s > 1.0 && distSqLine <= radiusSq) {
+      } else if (s > 1.0 && distSqLine <= radiusSq) {
         /*
          * Obstacle viewed obliquely so that
          * right vertex defines velocity obstacle.
@@ -203,14 +201,12 @@ export class Agent {
         const leg2 = RVOMath.sqrt(distSq2 - radiusSq);
         leftLegDirection = Vector2.divide(new Vector2(relativePosition2.x * leg2 - relativePosition2.y * this.radius_, relativePosition2.x * this.radius_ + relativePosition2.y * leg2), distSq2);
         rightLegDirection = Vector2.divide(new Vector2(relativePosition2.x * leg2 + relativePosition2.y * this.radius_, -relativePosition2.x * this.radius_ + relativePosition2.y * leg2), distSq2);
-      }
-      else {
+      } else {
         /* Usual situation. */
         if (obstacle1.convex_) {
           const leg1 = RVOMath.sqrt(distSq1 - radiusSq);
           leftLegDirection = Vector2.divide(new Vector2(relativePosition1.x * leg1 - relativePosition1.y * this.radius_, relativePosition1.x * this.radius_ + relativePosition1.y * leg1), distSq1);
-        }
-        else {
+        } else {
           /* Left vertex non-convex; left leg extends cut-off line. */
           leftLegDirection = Vector2.negate(obstacle1.direction_);
         }
@@ -218,8 +214,7 @@ export class Agent {
         if (obstacle2.convex_) {
           const leg2 = RVOMath.sqrt(distSq2 - radiusSq);
           rightLegDirection = Vector2.divide(new Vector2(relativePosition2.x * leg2 + relativePosition2.y * this.radius_, -relativePosition2.x * this.radius_ + relativePosition2.y * leg2), distSq2);
-        }
-        else {
+        } else {
           /* Right vertex non-convex; right leg extends cut-off line. */
           rightLegDirection = obstacle1.direction_;
         }
@@ -270,8 +265,7 @@ export class Agent {
         this.orcaLines_.push(line);
 
         continue;
-      }
-      else if (t > 1.0 && tRight < 0.0) {
+      } else if (t > 1.0 && tRight < 0.0) {
         /* Project on right cut-off circle. */
         const unitW = RVOMath.normalize(Vector2.subtract(this.velocity_, rightCutOff));
 
@@ -355,16 +349,14 @@ export class Agent {
 
           line.direction = new Vector2(unitW.y, -unitW.x);
           u = Vector2.multiply(unitW, (combinedRadius * invTimeHorizon - wLength));
-        }
-        else {
+        } else {
           /* Project on legs. */
           const leg = RVOMath.sqrt(distSq - combinedRadiusSq);
 
           if (RVOMath.det(relativePosition, w) > 0.0) {
             /* Project on left leg. */
             line.direction = Vector2.divide(new Vector2(relativePosition.x * leg - relativePosition.y * combinedRadius, relativePosition.x * combinedRadius + relativePosition.y * leg), distSq);
-          }
-          else {
+          } else {
             /* Project on right leg. */
             line.direction = Vector2.divide(Vector2.negate(new Vector2(relativePosition.x * leg + relativePosition.y * combinedRadius, -relativePosition.x * combinedRadius + relativePosition.y * leg)), distSq);
           }
@@ -372,8 +364,7 @@ export class Agent {
           const dotProduct2 = Vector2.dot(relativeVelocity, line.direction);
           u = Vector2.multiply(Vector2.subtract(line.direction, relativeVelocity), dotProduct2);
         }
-      }
-      else {
+      } else {
         /* Collision. Project on cut-off circle of time timeStep. */
         const invTimeStep = 1.0 / this.simulator.timeStep_;
 
@@ -387,7 +378,8 @@ export class Agent {
         u = Vector2.multiply(unitW, (combinedRadius * invTimeStep - wLength));
       }
 
-      line.point = Vector2.add(this.velocity_, Vector2.multiply(u, 0.5));
+      u = other.isFreeze ? u : Vector2.multiply(u, 0.5);
+      line.point = Vector2.add(this.velocity_, u);
       this.orcaLines_.push(line);
     }
 
@@ -400,11 +392,9 @@ export class Agent {
   }
 
   /**
-   * <summary>Inserts an agent neighbor into the set of neighbors of this
-   * agent.</summary>
-   *
-   * <param name="agent">A pointer to the agent to be inserted.</param>
-   * <param name="rangeSq">The squared range around this agent.</param>
+   * Inserts an agent neighbor into the set of neighbors of this agent.
+   * @param agent A pointer to the agent to be inserted.
+   * @param rangeSq The squared range around this agent.
    */
   public insertAgentNeighbor(agent: Agent, rangeSq: number) {
     if (this != agent) {
@@ -432,12 +422,9 @@ export class Agent {
   }
 
   /**
-   * <summary>Inserts a static obstacle neighbor into the set of neighbors
-   * of this agent.</summary>
-   *
-   * <param name="obstacle">The number of the static obstacle to be
-   * inserted.</param>
-   * <param name="rangeSq">The squared range around this agent.</param>
+   * Inserts a static obstacle neighbor into the set of neighbors of this agent.
+   * @param obstacle The number of the static obstacle to be inserted.
+   * @param rangeSq The squared range around this agent.
    */
   public insertObstacleNeighbor(obstacle: Obstacle, rangeSq: number) {
     const nextObstacle = obstacle.next_;
@@ -458,8 +445,7 @@ export class Agent {
   }
 
   /**
-   * <summary>Updates the two-dimensional position and two-dimensional
-   * velocity of this agent.</summary>
+   * Updates the two-dimensional position and two-dimensional velocity of this agent.
    */
   public update() {
     this.velocity_ = this.newVelocity_;
@@ -467,20 +453,16 @@ export class Agent {
   }
 
   /**
-   * <summary>Solves a one-dimensional linear program on a specified line
+   * Solves a one-dimensional linear program on a specified line
    * subject to linear constraints defined by lines and a circular
-   * constraint.</summary>
-   *
-   * <returns>True if successful.</returns>
-   *
-   * <param name="lines">Lines defining the linear constraints.</param>
-   * <param name="lineNo">The specified line constraint.</param>
-   * <param name="radius">The radius of the circular constraint.</param>
-   * <param name="optVelocity">The optimization velocity.</param>
-   * <param name="directionOpt">True if the direction should be optimized.
-   * </param>
-   * <param name="result">A reference to the result of the linear program.
-   * </param>
+   * constraint.
+   * @param lines Lines defining the linear constraints.
+   * @param lineNo The specified line constraint.
+   * @param radius The radius of the circular constraint.
+   * @param optVelocity The optimization velocity.
+   * @param directionOpt True if the direction should be optimized.
+   * @param result A reference to the result of the linear program.
+   * @returns True if successful.
    */
   private linearProgram1(lines: Line[], lineNo: number, radius: number, optVelocity: Vector2, directionOpt: boolean, result: Vector2) {
     const dotProduct = Vector2.dot(lines[lineNo].point, lines[lineNo].direction);
@@ -513,8 +495,7 @@ export class Agent {
       if (denominator >= 0.0) {
         /* Line i bounds line lineNo on the right. */
         tRight = Math.min(tRight, t);
-      }
-      else {
+      } else {
         /* Line i bounds line lineNo on the left. */
         tLeft = Math.max(tLeft, t);
       }
@@ -529,8 +510,7 @@ export class Agent {
       if (Vector2.dot(optVelocity, lines[lineNo].direction) > 0.0) {
         /* Take right extreme. */
         result = Vector2.add(lines[lineNo].point, Vector2.multiply(lines[lineNo].direction, tRight));
-      }
-      else {
+      } else {
         /* Take left extreme. */
         result = Vector2.add(lines[lineNo].point, Vector2.multiply(lines[lineNo].direction, tLeft));
       }
@@ -541,11 +521,9 @@ export class Agent {
 
       if (t < tLeft) {
         result = Vector2.add(lines[lineNo].point, Vector2.multiply(lines[lineNo].direction, tLeft));
-      }
-      else if (t > tRight) {
+      } else if (t > tRight) {
         result = Vector2.add(lines[lineNo].point, Vector2.multiply(lines[lineNo].direction, tRight));
-      }
-      else {
+      } else {
         result = Vector2.add(lines[lineNo].point, Vector2.multiply(lines[lineNo].direction, t));
       }
     }
@@ -554,19 +532,14 @@ export class Agent {
   }
 
   /**
-   * <summary>Solves a two-dimensional linear program subject to linear
-   * constraints defined by lines and a circular constraint.</summary>
-   *
-   * <returns>The number of the line it fails on, and the number of lines
-   * if successful.</returns>
-   *
-   * <param name="lines">Lines defining the linear constraints.</param>
-   * <param name="radius">The radius of the circular constraint.</param>
-   * <param name="optVelocity">The optimization velocity.</param>
-   * <param name="directionOpt">True if the direction should be optimized.
-   * </param>
-   * <param name="result">A reference to the result of the linear program.
-   * </param>
+   * Solves a two-dimensional linear program subject to linear
+   * constraints defined by lines and a circular constraint.
+   * @param lines Lines defining the linear constraints.
+   * @param radius The radius of the circular constraint.
+   * @param optVelocity The optimization velocity.
+   * @param directionOpt True if the direction should be optimized.
+   * @param result A reference to the result of the linear program.
+   * @returns The number of the line it fails on, and the number of lines if successful.
    */
   private linearProgram2(lines: Line[], radius: number, optVelocity: Vector2, directionOpt: boolean, result: Vector2): [number, Vector2] {
     if (directionOpt) {
@@ -575,12 +548,10 @@ export class Agent {
        * unit length in this case.
        */
       result = Vector2.multiply(optVelocity, radius);
-    }
-    else if (RVOMath.absSq(optVelocity) > RVOMath.sqr(radius)) {
+    } else if (RVOMath.absSq(optVelocity) > RVOMath.sqr(radius)) {
       /* Optimize closest point and outside circle. */
       result = Vector2.multiply(RVOMath.normalize(optVelocity), radius);
-    }
-    else {
+    } else {
       /* Optimize closest point and inside circle. */
       result = optVelocity;
     }
@@ -603,16 +574,13 @@ export class Agent {
   }
 
   /**
-   * <summary>Solves a two-dimensional linear program subject to linear
-   * constraints defined by lines and a circular constraint.</summary>
-   *
-   * <param name="lines">Lines defining the linear constraints.</param>
-   * <param name="numObstLines">Count of obstacle lines.</param>
-   * <param name="beginLine">The line on which the 2-d linear program
-   * failed.</param>
-   * <param name="radius">The radius of the circular constraint.</param>
-   * <param name="result">A reference to the result of the linear program.
-   * </param>
+   * Solves a two-dimensional linear program subject to linear
+   * constraints defined by lines and a circular constraint.
+   * @param lines Lines defining the linear constraints.
+   * @param numObstLines Count of obstacle lines.
+   * @param beginLine The line on which the 2-d linear program failed.
+   * @param radius The radius of the circular constraint.
+   * @param result A reference to the result of the linear program.
    */
   private linearProgram3(lines: Line[], numObstLines: number, beginLine: number, radius: number, result: Vector2) {
     let distance = 0.0;
@@ -635,13 +603,11 @@ export class Agent {
             if (Vector2.dot(lines[i].direction, lines[j].direction) > 0.0) {
               /* Line i and line j point in the same direction. */
               continue;
-            }
-            else {
+            } else {
               /* Line i and line j point in opposite direction. */
               line.point = Vector2.multiply(Vector2.add(lines[i].point, lines[j].point), 0.5);
             }
-          }
-          else {
+          } else {
             /// !!!!!!!!!!!!!!!!!!!!!!!!!!!! these next couple lines might break
             line.point = Vector2.add(lines[i].point,
               Vector2.multiply(lines[i].direction, RVOMath.det(lines[j].direction, Vector2.divide(Vector2.subtract(lines[i].point, lines[j].point), determinant))));

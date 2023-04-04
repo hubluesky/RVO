@@ -34,7 +34,7 @@
 import { Vector2 } from "./Vector2";
 
 /**
- * <summary>Defines a directed line.</summary>
+ * Defines a directed line.
  */
 export type Line = {
   direction: Vector2;
