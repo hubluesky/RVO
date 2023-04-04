@@ -12,8 +12,8 @@ function drawCicle(context: CanvasRenderingContext2D, position: Vector2, radius:
 
 function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
     const goals: Vector2[] = [];
-    const radius = 6;
-    const agentRender: { id: number, arrive: boolean, color: string }[] = [];
+    const radius = 5;
+    const agentRender: { id: number, arrive: boolean, color: string, position?: Vector2 }[] = [];
     const setupScenario = function () {
         /* Specify the global time step of the simulation. */
         rvo.setTimeStep(0.55);
@@ -52,23 +52,21 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
          * Set the preferred velocity to be a vector of unit magnitude
          * (speed) in the direction of the goal.
          */
-        for (let i = 0; i < rvo.getNumAgents(); ++i) {
-            // if (agentRender[i].arrive) continue;
-
-            const position = rvo.getAgentPosition(i);
-            let goalVector = Vector2.subtract(goals[i], position);
+        rvo.forEachAgent((agentNo) => {
+            const position = rvo.getAgentPosition(agentNo);
+            let goalVector = Vector2.subtract(goals[agentNo], position);
 
             if (RVOMath.absSq(goalVector) > 1) {
                 goalVector = RVOMath.normalize(goalVector);
             }
 
-            rvo.setAgentPrefVelocity(i, goalVector);
-        }
+            rvo.setAgentPrefVelocity(agentNo, goalVector);
+        });
     }
 
     const renderAgents = function (): void {
         for (const render of agentRender) {
-            const position = rvo.getAgentPosition(render.id);
+            const position = render.position ?? rvo.getAgentPosition(render.id);
             drawCicle(context, position, radius, render.color);
         }
     }
@@ -77,22 +75,23 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
         const vec2Temp = new Vector2();
         let result = true;
         /* Check if all agents have reached their goals. */
-        for (let i = 0; i < rvo.getNumAgents(); ++i) {
-            const position = rvo.getAgentPosition(i);
-            const radius = rvo.getAgentRadius(i);
-            const direction = Vector2.subtract(position, goals[i], vec2Temp);
+        rvo.forEachAgent((agentNo) => {
+            const position = rvo.getAgentPosition(agentNo);
+            const radius = rvo.getAgentRadius(agentNo);
+            const direction = Vector2.subtract(position, goals[agentNo], vec2Temp);
             if (RVOMath.absSq(direction) > radius * radius) {
                 result = false;
             } else {
-                rvo.setAgentPrefVelocity(i, new Vector2());
-                rvo.setAgentVelocity(i, new Vector2());
-                rvo.setAgentMaxNeighbors(i, 0);
-                // rvo.agents_[i].isFreeze = true;
-                agentRender[i].color = "#ff0000";
-                agentRender[i].arrive = true;
+                // rvo.setAgentPrefVelocity(i, new Vector2());
+                // rvo.setAgentVelocity(i, new Vector2());
+                // rvo.setAgentMaxNeighbors(i, 0);
+                // rvo.freezeAgent(i);
+                agentRender[agentNo].position = position.clone();
+                agentRender[agentNo].color = "#ff0000";
+                agentRender[agentNo].arrive = true;
+                rvo.delAgent(agentNo);
             }
-        }
-
+        });
         return result;
     }
 

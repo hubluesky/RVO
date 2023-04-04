@@ -380,8 +380,7 @@ export class Agent {
         u = Vector2.multiply(unitW, (combinedRadius * invTimeStep - wLength));
       }
 
-      u = other.isFreeze ? u : Vector2.multiply(u, 0.5);
-      line.point = Vector2.add(this.velocity_, u);
+      line.point = Vector2.add(this.velocity_, Vector2.multiply(u, 0.5));
       this.orcaLines_.push(line);
     }
 

@@ -141,8 +141,7 @@ const MAX_LEAF_SIZE = 10;
  * Defines k-D trees for agents and static obstacles in the simulation.
  */
 export class KdTree {
-
-  private agents_: Agent[] | null = null;
+  private agents_: Agent[] = [];
   private agentTree_: AgentTreeNode[] = [];
   private obstacleTree_: ObstacleTreeNode;
 
@@ -152,12 +151,10 @@ export class KdTree {
    * Builds an agent k-D tree.
    */
   public buildAgentTree() {
-    if (this.agents_ === null || this.agents_.length != this.simulator.agents_.length) {
-      this.agents_ = new Array<Agent>(this.simulator.agents_.length);
-
-      for (let i = 0; i < this.agents_.length; ++i) {
-        this.agents_[i] = this.simulator.agents_[i];
-      }
+    if (this.agents_.length != this.simulator.agentCount) {
+      this.simulator.forEachAgent((agentNo) => {
+        this.agents_.push(this.simulator.agents_[agentNo]);
+      });
 
       this.agentTree_ = new Array<AgentTreeNode>(2 * this.agents_.length);
 
@@ -166,9 +163,15 @@ export class KdTree {
       }
     }
 
-    if (this.agents_.length != 0) {
+    if (this.agents_.length > 0)
       this.buildAgentTreeRecursive(0, this.agents_.length, 0);
-    }
+  }
+
+  public delAgent(agent: Agent): void {
+    const index = this.agents_.indexOf(agent);
+    console.assert(index != -1);
+    this.agents_.splice(index, 1);
+    this.agentTree_.length = this.agents_.length * 2;
   }
 
   /**
@@ -404,7 +407,7 @@ export class KdTree {
           newObstacle.convex_ = true;
           newObstacle.direction_ = obstacleJ1.direction_;
 
-          newObstacle.id_ = this.simulator.obstacles_.length;
+          newObstacle.id_ = obstacleJ1.id_;
 
           this.simulator.obstacles_.push(newObstacle);
 
