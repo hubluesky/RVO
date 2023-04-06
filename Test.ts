@@ -67,7 +67,7 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
             const position = rvo.getAgentPosition(agentNo);
             let goalVector = Vector2.subtract(goals[agentNo], position);
 
-            if (RVOMath.absSq(goalVector) > 1) {
+            if (goalVector.lengthSq() > 1) {
                 goalVector = RVOMath.normalize(goalVector);
             }
 
@@ -90,7 +90,7 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
             const position = rvo.getAgentPosition(agentNo);
             const radius = rvo.getAgentRadius(agentNo);
             const direction = Vector2.subtract(position, goals[agentNo], vec2Temp);
-            if (RVOMath.absSq(direction) > radius * radius) {
+            if (direction.lengthSq() > radius * radius) {
                 result = false;
             } else {
                 // rvo.setAgentPrefVelocity(i, new Vector2());
@@ -224,7 +224,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
             const position = rvo.getAgentPosition(agentNo);
             let goalVector = Vector2.subtract(goals[agentNo], position);
 
-            if (RVOMath.absSq(goalVector) > 1) {
+            if (goalVector.lengthSq() > 1) {
                 goalVector = RVOMath.normalize(goalVector);
             }
 
@@ -257,7 +257,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
             const position = rvo.getAgentPosition(agentNo);
             const radius = rvo.getAgentRadius(agentNo);
             const direction = Vector2.subtract(position, goals[agentNo], vec2Temp);
-            if (RVOMath.absSq(direction) > radius * radius) {
+            if (direction.lengthSq() > radius * radius) {
                 result = false;
             } else {
                 // rvo.setAgentPrefVelocity(i, new Vector2());

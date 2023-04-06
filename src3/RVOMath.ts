@@ -1,5 +1,8 @@
 import { Vector2 } from "./Vector2";
 
+const __vecTemp1 = new Vector2();
+const __vecTemp2 = new Vector2();
+
 /**
  * Contains functions and constants used in multiple classes.
  */
@@ -19,21 +22,12 @@ export class RVOMath {
     }
 
     /**
-     * Computes the squared length of a specified two-dimensional vector.
-     * @param vector The two-dimensional vector whose squared length is to be computed.
-     * @returns The squared length of the two-dimensional vector.
-     */
-    public static absSq(vector: Vector2): number {
-        return Vector2.dot(vector, vector);
-    }
-
-    /**
      * Computes the length of a specified two-dimensional vector.
      * @param vector The two-dimensional vector whose length is to be computed.
      * @returns The length of the two-dimensional vector.
      */
     public static abs(vector: Vector2): number {
-        return Math.sqrt(RVOMath.absSq(vector));
+        return Math.sqrt(vector.lengthSq());
     }
 
     /**
@@ -64,14 +58,14 @@ export class RVOMath {
      * @returns The squared distance from the line segment to the point.
      */
     public static distSqPointLineSegment(vector1: Vector2, vector2: Vector2, vector3: Vector2): number {
-        let vt1 = Vector2.subtract(vector3, vector1);
-        let vt2 = Vector2.subtract(vector2, vector1);
-        let r = Vector2.dot(vt1, vt2) / RVOMath.absSq(vt2);
-        if (r < 0) return RVOMath.absSq(vt1);
-        if (r > 1) return RVOMath.absSq(Vector2.subtract(vector3, vector2));
-        vt2 = Vector2.multiply(vt2, r, vt2);
-        vt2 = Vector2.add(vector1, vt2, vt2);
-        return RVOMath.absSq(Vector2.subtract(vector3, vt2, vt2));
+        let vt1 = Vector2.subtract(vector3, vector1, __vecTemp1);
+        let vt2 = Vector2.subtract(vector2, vector1, __vecTemp2);
+        let r = Vector2.dot(vt1, vt2) / vt2.lengthSq();
+        if (r < 0) return vt1.lengthSq();
+        if (r > 1) return Vector2.subtract(vector3, vector2, __vecTemp1).lengthSq();
+        vt2 = Vector2.multiply(vt2, r, __vecTemp2);
+        vt2 = Vector2.add(vector1, vt2, __vecTemp2);
+        return Vector2.subtract(vector3, vt2, __vecTemp2).lengthSq();
     }
 
     /**
@@ -82,6 +76,6 @@ export class RVOMath {
      * @returns Positive when the point c lies to the left of the line ab.
      */
     public static leftOf(a: Vector2, b: Vector2, c: Vector2): number {
-        return RVOMath.det(Vector2.subtract(a, c), Vector2.subtract(b, a));
+        return RVOMath.det(Vector2.subtract(a, c, __vecTemp1), Vector2.subtract(b, a, __vecTemp2));
     }
 }

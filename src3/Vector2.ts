@@ -18,6 +18,30 @@ export class Vector2 {
         return "(" + this.x + "," + this.y + ")";
     }
 
+    /**
+     * Computes the squared length of a specified two-dimensional vector.
+     * @returns The squared length of the two-dimensional vector.
+     */
+    public lengthSq(): number {
+        return this.dot(this);
+    }
+
+    /**
+     * Computes the length of a specified two-dimensional vector.
+     * @returns The length of the two-dimensional vector.
+     */
+    public length(): number {
+        return Math.sqrt(this.lengthSq());
+    }
+
+    /**
+     * Computes the normalization of the specified two-dimensional vector.
+     * @returns The normalization of the two-dimensional vector.
+     */
+    public normalize(): Vector2 {
+        return this.multiply(1 / this.length());
+    }
+
     public dot(other: Vector2): number {
         return this.x * other.x + this.y * other.y;
     }
@@ -129,6 +153,15 @@ export class Vector2 {
      */
     public static dot(a: Vector2, b: Vector2): number {
         return a.x * b.x + a.y * b.y;
+    }
+
+    /**
+     * Computes the normalization of the specified two-dimensional vector.
+     * @param vector The two-dimensional vector whose normalization is to be computed.
+     * @returns The normalization of the two-dimensional vector.
+     */
+    public static normalize(vector: Vector2, out: Vector2 = new Vector2): Vector2 {
+        return Vector2.divide(vector, vector.length(), out);
     }
 
     /**

@@ -4,6 +4,7 @@ import { RVOMath } from "./RVOMath";
 import { Simulator } from "./Simulator";
 import { Vector2 } from "./Vector2";
 
+const __vecTemp1 = new Vector2();
 type int = number;
 
 /**
@@ -361,9 +362,8 @@ export class KdTree {
         let result = { rangeSq: rangeSq, agentNo: agentNo };
         let treeNode = this.agentTree_[node];
         if (treeNode.end_ - treeNode.begin_ <= KdTree.MAX_LEAF_SIZE) {
-            let vt = new Vector2();
             for (let i = treeNode.begin_; i < treeNode.end_; ++i) {
-                let distSq = RVOMath.absSq(Vector2.subtract(position, this.agents_[i].position_, vt));
+                let distSq = Vector2.subtract(position, this.agents_[i].position_, __vecTemp1).lengthSq();
                 if (distSq < result.rangeSq) {
                     result.rangeSq = distSq;
                     result.agentNo = this.agents_[i].id_;
@@ -385,17 +385,15 @@ export class KdTree {
                 if (distSqLeft < result.rangeSq) {
                     result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.left_);
 
-                    if (distSqRight < result.rangeSq) {
+                    if (distSqRight < result.rangeSq)
                         result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.right_);
-                    }
                 }
             } else {
                 if (distSqRight < result.rangeSq) {
                     result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.right_);
 
-                    if (distSqLeft < result.rangeSq) {
+                    if (distSqLeft < result.rangeSq)
                         result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.left_);
-                    }
                 }
             }
 
@@ -438,9 +436,8 @@ export class KdTree {
                 if (distSqRight < rangeSq) {
                     rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.right_);
 
-                    if (distSqLeft < rangeSq) {
+                    if (distSqLeft < rangeSq)
                         rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.left_);
-                    }
                 }
             }
 
@@ -462,7 +459,7 @@ export class KdTree {
 
         this.queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= 0.0 ? node.left_ : node.right_);
 
-        let distSqLine = RVOMath.sqr(agentLeftOfLine) / RVOMath.absSq(Vector2.subtract(obstacle2.point_, obstacle1.point_));
+        let distSqLine = RVOMath.sqr(agentLeftOfLine) / Vector2.subtract(obstacle2.point_, obstacle1.point_, __vecTemp1).lengthSq();
 
         if (distSqLine < rangeSq) {
             if (agentLeftOfLine < 0.0) {
@@ -488,13 +485,12 @@ export class KdTree {
     queryVisibilityRecursive(q1: Vector2, q2: Vector2, radius: number, node: ObstacleTreeNode): boolean {
         if (node == null) return true;
 
-        let vt = new Vector2();
         let obstacle1 = node.obstacle_;
         let obstacle2 = obstacle1.next_;
 
         let q1LeftOfI = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, q1);
         let q2LeftOfI = RVOMath.leftOf(obstacle1.point_, obstacle2.point_, q2);
-        let invLengthI = 1.0 / RVOMath.absSq(Vector2.subtract(obstacle2.point_, obstacle1.point_, vt));
+        let invLengthI = 1.0 / Vector2.subtract(obstacle2.point_, obstacle1.point_, __vecTemp1).lengthSq();
 
         if (q1LeftOfI >= 0.0 && q2LeftOfI >= 0.0) {
             return this.queryVisibilityRecursive(q1, q2, radius, node.left_) && ((RVOMath.sqr(q1LeftOfI) * invLengthI >= RVOMath.sqr(radius)
@@ -513,7 +509,7 @@ export class KdTree {
 
         let point1LeftOfQ = RVOMath.leftOf(q1, q2, obstacle1.point_);
         let point2LeftOfQ = RVOMath.leftOf(q1, q2, obstacle2.point_);
-        let invLengthQ = 1.0 / RVOMath.absSq(Vector2.subtract(q2, q1, vt));
+        let invLengthQ = 1.0 / Vector2.subtract(q2, q1, __vecTemp1).lengthSq();
 
         return point1LeftOfQ * point2LeftOfQ >= 0.0 && RVOMath.sqr(point1LeftOfQ) * invLengthQ > RVOMath.sqr(radius)
             && RVOMath.sqr(point2LeftOfQ) * invLengthQ > RVOMath.sqr(radius)

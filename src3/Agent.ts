@@ -4,6 +4,10 @@ import { RVOMath } from "./RVOMath";
 import { Simulator } from "./Simulator";
 import { Vector2 } from "./Vector2";
 
+const __vecTemp1 = new Vector2();
+const __vecTemp2 = new Vector2();
+const __vecTemp3 = new Vector2();
+const __vecTemp4 = new Vector2();
 type int = number;
 
 class KeyValuePair<TKey, TValue> {
@@ -58,15 +62,14 @@ export class Agent {
 
         let invTimeHorizonObst = 1.0 / this.timeHorizonObst_;
 
-        let vt1 = new Vector2(), vt2 = new Vector2(), vt3 = new Vector2(), vt4 = new Vector2();
         /* Create obstacle ORCA lines. */
         for (let i = 0; i < this.obstacleNeighbors_.length; ++i) {
 
             let obstacle1 = this.obstacleNeighbors_[i].value;
             let obstacle2 = obstacle1.next_;
 
-            let relativePosition1 = Vector2.subtract(obstacle1.point_, this.position_, vt1);
-            let relativePosition2 = Vector2.subtract(obstacle2.point_, this.position_, vt2);
+            let relativePosition1 = Vector2.subtract(obstacle1.point_, this.position_, __vecTemp1);
+            let relativePosition2 = Vector2.subtract(obstacle2.point_, this.position_, __vecTemp2);
 
             /*
              * Check if velocity obstacle of obstacle is already taken care
@@ -76,8 +79,8 @@ export class Agent {
 
             for (let j = 0; j < this.orcaLines_.length; ++j) {
                 let orcaLine = this.orcaLines_[j];
-                let rp1i = Vector2.multiply(relativePosition1, invTimeHorizonObst, vt3);
-                let rp2i = Vector2.multiply(relativePosition2, invTimeHorizonObst, vt4);
+                let rp1i = Vector2.multiply(relativePosition1, invTimeHorizonObst, __vecTemp3);
+                let rp2i = Vector2.multiply(relativePosition2, invTimeHorizonObst, __vecTemp4);
                 if (RVOMath.det(Vector2.subtract(rp1i, orcaLine.point, rp1i), orcaLine.direction) - invTimeHorizonObst * this.radius_
                     >= -RVOMath.RVO_EPSILON && RVOMath.det(Vector2.subtract(rp2i, orcaLine.point, rp2i), orcaLine.direction) - invTimeHorizonObst * this.radius_
                     >= -RVOMath.RVO_EPSILON) {
@@ -90,22 +93,22 @@ export class Agent {
                 continue;
 
             /* Not yet covered. Check for collisions. */
-            let distSq1 = RVOMath.absSq(relativePosition1);
-            let distSq2 = RVOMath.absSq(relativePosition2);
+            let distSq1 = relativePosition1.lengthSq();
+            let distSq2 = relativePosition2.lengthSq();
 
             let radiusSq = RVOMath.sqr(this.radius_);
 
-            let obstacleVector = Vector2.subtract(obstacle2.point_, obstacle1.point_, vt3);
-            let rp1n = Vector2.negate(relativePosition1, vt4);
-            let s = Vector2.dot(rp1n, obstacleVector) / RVOMath.absSq(obstacleVector);
-            let distSqLine = RVOMath.absSq(Vector2.subtract(rp1n, Vector2.multiply(obstacleVector, s, obstacleVector), rp1n));
+            let obstacleVector = Vector2.subtract(obstacle2.point_, obstacle1.point_, __vecTemp3);
+            let rp1n = Vector2.negate(relativePosition1, __vecTemp4);
+            let s = Vector2.dot(rp1n, obstacleVector) / obstacleVector.lengthSq();
+            let distSqLine = Vector2.subtract(rp1n, Vector2.multiply(obstacleVector, s, obstacleVector), rp1n).lengthSq();
 
             let line: Line = new Line();
             if (s < 0.0 && distSq1 <= radiusSq) {
                 /* Collision with left vertex. Ignore if non-convex. */
                 if (obstacle1.convex_) {
-                    line.point = new Vector2(0.0, 0.0);
-                    line.direction = RVOMath.normalize(new Vector2(-relativePosition1.y, relativePosition1.x));
+                    line.point.reset();
+                    line.direction.set(new Vector2(-relativePosition1.y, relativePosition1.x)).normalize();
                     this.orcaLines_.push(line);
                 }
 
@@ -228,7 +231,7 @@ export class Agent {
 
             /* Check if current velocity is projected on cutoff circles. */
             let vslc = Vector2.subtract(this.velocity_, leftCutOff);
-            let t = obstacle1 == obstacle2 ? 0.5 : Vector2.dot(vslc, cutOffVector) / RVOMath.absSq(cutOffVector);
+            let t = obstacle1 == obstacle2 ? 0.5 : Vector2.dot(vslc, cutOffVector) / cutOffVector.lengthSq();
             let tLeft = Vector2.dot(vslc, leftLegDirection);
             let tRight = Vector2.dot(vslc, rightLegDirection);
 
@@ -263,19 +266,19 @@ export class Agent {
             vt10 = Vector2.add(leftCutOff, vt10, vt10);
             vt10 = Vector2.subtract(this.velocity_, vt10, vt10);
 
-            let distSqCutoff = (t < 0.0 || t > 1.0 || obstacle1 == obstacle2) ? Number.MAX_VALUE : RVOMath.absSq(vt10);
+            let distSqCutoff = (t < 0.0 || t > 1.0 || obstacle1 == obstacle2) ? Number.MAX_VALUE : vt10.lengthSq();
 
             let vt11 = Vector2.multiply(leftLegDirection, tLeft, vt10);
             vt11 = Vector2.add(leftCutOff, vt11, vt10);
             vt11 = Vector2.subtract(this.velocity_, vt11, vt10);
 
-            let distSqLeft = tLeft < 0.0 ? Number.MAX_VALUE : RVOMath.absSq(vt11);
+            let distSqLeft = tLeft < 0.0 ? Number.MAX_VALUE : vt11.lengthSq();
 
             let vt12 = Vector2.multiply(rightLegDirection, tRight, vt10);
             vt12 = Vector2.add(rightCutOff, vt12, vt10);
             vt12 = Vector2.subtract(this.velocity_, vt12, vt10);
 
-            let distSqRight = tRight < 0.0 ? Number.MAX_VALUE : RVOMath.absSq(vt12);
+            let distSqRight = tRight < 0.0 ? Number.MAX_VALUE : vt12.lengthSq();
 
             if (distSqCutoff <= distSqLeft && distSqCutoff <= distSqRight) {
                 /* Project on cut-off line. */
@@ -322,9 +325,9 @@ export class Agent {
         for (let i = 0; i < this.agentNeighbors_.length; ++i) {
             let other = this.agentNeighbors_[i].value;
 
-            let relativePosition = Vector2.subtract(other.position_, this.position_, vt1);
-            let relativeVelocity = Vector2.subtract(this.velocity_, other.velocity_, vt2);
-            let distSq = RVOMath.absSq(relativePosition);
+            let relativePosition = Vector2.subtract(other.position_, this.position_, __vecTemp1);
+            let relativeVelocity = Vector2.subtract(this.velocity_, other.velocity_, __vecTemp2);
+            let distSq = relativePosition.lengthSq();
             let combinedRadius = this.radius_ + other.radius_;
             let combinedRadiusSq = RVOMath.sqr(combinedRadius);
 
@@ -333,11 +336,11 @@ export class Agent {
 
             if (distSq > combinedRadiusSq) {
                 /* No collision. */
-                let rpi = Vector2.multiply(relativePosition, invTimeHorizon, vt3);
+                let rpi = Vector2.multiply(relativePosition, invTimeHorizon, __vecTemp3);
                 let w: Vector2 = Vector2.subtract(relativeVelocity, rpi, rpi);
 
                 /* Vector from cutoff center to relative velocity. */
-                let wLengthSq = RVOMath.absSq(w);
+                let wLengthSq = w.lengthSq();
                 let dotProduct1 = Vector2.dot(w, relativePosition);
 
                 if (dotProduct1 < 0.0 && RVOMath.sqr(dotProduct1) > combinedRadiusSq * wLengthSq) {
@@ -372,7 +375,7 @@ export class Agent {
                 let invTimeStep = 1.0 / this.simulator.timeStep_;
 
                 /* Vector from cutoff center to relative velocity. */
-                let rpi = Vector2.multiply(relativePosition, invTimeStep, vt3);
+                let rpi = Vector2.multiply(relativePosition, invTimeStep, __vecTemp3);
                 let w = Vector2.subtract(relativeVelocity, rpi, rpi);
 
                 let wLength = RVOMath.abs(w);
@@ -401,7 +404,7 @@ export class Agent {
      */
     insertAgentNeighbor(agent: Agent, rangeSq: number): number {
         if (this != agent) {
-            let distSq = RVOMath.absSq(Vector2.subtract(this.position_, agent.position_));
+            let distSq = Vector2.subtract(this.position_, agent.position_).lengthSq();
 
             if (distSq < rangeSq) {
                 if (this.agentNeighbors_.length < this.maxNeighbors_) {
@@ -474,7 +477,7 @@ export class Agent {
     linearProgram1(lines: Array<Line>, lineNo: int, radius: number, optVelocity: Vector2, directionOpt: boolean): Vector2 {
         let lineNoDirection = lines[lineNo].direction, lineNoPoint = lines[lineNo].point;
         let dotProduct = Vector2.dot(lineNoPoint, lineNoDirection);
-        let discriminant = RVOMath.sqr(dotProduct) + RVOMath.sqr(radius) - RVOMath.absSq(lineNoPoint);
+        let discriminant = RVOMath.sqr(dotProduct) + RVOMath.sqr(radius) - lineNoPoint.lengthSq();
 
         /* Max speed circle fully invalidates line lineNo. */
         if (discriminant < 0.0)
@@ -562,7 +565,7 @@ export class Agent {
              * unit length in this case.
              */
             result = Vector2.multiply(optVelocity, radius);
-        } else if (RVOMath.absSq(optVelocity) > RVOMath.sqr(radius)) {
+        } else if (optVelocity.lengthSq() > RVOMath.sqr(radius)) {
             /* Optimize closest point and outside circle. */
             let n = RVOMath.normalize(optVelocity);
             result = Vector2.multiply(n, radius, n);

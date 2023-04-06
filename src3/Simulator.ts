@@ -5,6 +5,7 @@ import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
 import { Vector2 } from "./Vector2";
 
+const __vecTemp1 = new Vector2();
 type int = number;
 
 /*
@@ -62,28 +63,10 @@ export class Simulator {
             // callback(this.agents_[agentNo].id_);
         }
     }
+
     /**
      * Adds a new agent to the simulation.
      * @param position The two-dimensional starting position of this agent.
-     * @param neighborDist The maximum distance (center point to
-     * center point) to other agents this agent takes into account in the
-     * navigation. The larger this number, the longer the running time of
-     * the simulation. If the number is too low, the simulation will not be
-     * safe. Must be non-negative.
-     * @param maxNeighbors The maximum number of other agents this
-     * agent takes into account in the navigation. The larger this number,
-     * the longer the running time of the simulation. If the number is too
-     * low, the simulation will not be safe.
-     * @param timeHorizon The minimal amount of time for which this
-     * agent's velocities that are computed by the simulation are safe with
-     * respect to other agents. The larger this number, the sooner this
-     * agent will respond to the presence of other agents, but the less
-     * freedom this agent has in choosing its velocities. Must be positive.
-     * @param timeHorizonObst The minimal amount of time for which
-     * this agent's velocities that are computed by the simulation are safe
-     * with respect to obstacles. The larger this number, the sooner this
-     * agent will respond to the presence of obstacles, but the less freedom
-     * this agent has in choosing its velocities. Must be positive.
      * @param radius The radius of this agent. Must be non-negative.
      * @param maxSpeed The maximum speed of this agent. Must be non-negative.
      * @returns The number of the agent.
@@ -105,6 +88,36 @@ export class Simulator {
         return agent.id_;
     }
 
+    /**
+     * 
+     * @param agentNo The number of the agent.
+     * @param neighborDist The maximum distance (center point to
+     * center point) to other agents this agent takes into account in the
+     * navigation. The larger this number, the longer the running time of
+     * the simulation. If the number is too low, the simulation will not be
+     * safe. Must be non-negative.
+     * @param maxNeighbors The maximum number of other agents this
+     * agent takes into account in the navigation. The larger this number,
+     * the longer the running time of the simulation. If the number is too
+     * low, the simulation will not be safe.
+     * @param timeHorizon The minimal amount of time for which this
+     * agent's velocities that are computed by the simulation are safe with
+     * respect to other agents. The larger this number, the sooner this
+     * agent will respond to the presence of other agents, but the less
+     * freedom this agent has in choosing its velocities. Must be positive.
+     * @param timeHorizonObst The minimal amount of time for which
+     * this agent's velocities that are computed by the simulation are safe
+     * with respect to obstacles. The larger this number, the sooner this
+     * agent will respond to the presence of obstacles, but the less freedom
+     * this agent has in choosing its velocities. Must be positive.
+     */
+    public setAgentParams(agentNo: int, neighborDist: number, maxNeighbors: int, timeHorizon: number, timeHorizonObst: number): void {
+        const agent = this.agents_[agentNo];
+        agent.maxNeighbors_ = this.defaultAgent_.maxNeighbors_;
+        agent.neighborDist_ = this.defaultAgent_.neighborDist_;
+        agent.timeHorizon_ = this.defaultAgent_.timeHorizon_;
+        agent.timeHorizonObst_ = this.defaultAgent_.timeHorizonObst_;
+    }
 
     delAgent(agentNo: int): void {
         const agent = this.agents_[agentNo];
@@ -120,7 +133,7 @@ export class Simulator {
      * @param vertices List of the vertices of the polygonal obstacle in counterclockwise order.
      * @returns The number of the first vertex of the obstacle, or -1 when the number of vertices is less than two.
      */
-    addObstacle(vertices: Vector2[]): number {
+    addObstacle(vertices: readonly Vector2[]): number {
         console.assert(vertices.length >= 2);
         if (vertices.length < 2)
             return -1;
@@ -141,8 +154,7 @@ export class Simulator {
                 obstacle.next_.previous_ = obstacle;
             }
 
-            let vt = new Vector2();
-            obstacle.direction_ = RVOMath.normalize(Vector2.subtract(vertices[(i == vertices.length - 1 ? 0 : i + 1)], vertices[i], vt), vt);
+            obstacle.direction_ = RVOMath.normalize(Vector2.subtract(vertices[(i == vertices.length - 1 ? 0 : i + 1)], vertices[i], __vecTemp1), __vecTemp1).clone();
 
             if (vertices.length == 2) {
                 obstacle.convex_ = true;
@@ -397,6 +409,7 @@ export class Simulator {
     processObstacles(): void {
         this.kdTree_.buildObstacleTree();
     }
+
     /**
      * Performs a visibility query between the two specified points with respect to the obstacles.
      * @param point1 The first point of the query.
