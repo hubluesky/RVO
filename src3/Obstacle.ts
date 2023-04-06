@@ -1,5 +1,8 @@
 import { Vector2 } from "./Vector2";
 
+/**
+ * Defines static obstacles in the simulation.
+ */
 export class Obstacle {
     next_: Obstacle;
     previous_: Obstacle;

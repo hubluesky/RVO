@@ -35,6 +35,10 @@ type int = number;
  *
  * <http://gamma.cs.unc.edu/RVO2/>
  */
+
+/**
+ * Defines the simulation.
+ */
 export class Simulator {
     readonly agents_: Array<Agent> = [];
     readonly obstacles_: Array<Obstacle> = [];
@@ -45,7 +49,9 @@ export class Simulator {
     private globalTime_: number;
     public agentCount: number = 0;
     public obstacleCount: number = 0;
-
+    /**
+     * Constructs and initializes a simulation.
+     */
     public constructor() {
         this.clear();
     }
@@ -56,20 +62,45 @@ export class Simulator {
             // callback(this.agents_[agentNo].id_);
         }
     }
-
+    /**
+     * Adds a new agent to the simulation.
+     * @param position The two-dimensional starting position of this agent.
+     * @param neighborDist The maximum distance (center point to
+     * center point) to other agents this agent takes into account in the
+     * navigation. The larger this number, the longer the running time of
+     * the simulation. If the number is too low, the simulation will not be
+     * safe. Must be non-negative.
+     * @param maxNeighbors The maximum number of other agents this
+     * agent takes into account in the navigation. The larger this number,
+     * the longer the running time of the simulation. If the number is too
+     * low, the simulation will not be safe.
+     * @param timeHorizon The minimal amount of time for which this
+     * agent's velocities that are computed by the simulation are safe with
+     * respect to other agents. The larger this number, the sooner this
+     * agent will respond to the presence of other agents, but the less
+     * freedom this agent has in choosing its velocities. Must be positive.
+     * @param timeHorizonObst The minimal amount of time for which
+     * this agent's velocities that are computed by the simulation are safe
+     * with respect to obstacles. The larger this number, the sooner this
+     * agent will respond to the presence of obstacles, but the less freedom
+     * this agent has in choosing its velocities. Must be positive.
+     * @param radius The radius of this agent. Must be non-negative.
+     * @param maxSpeed The maximum speed of this agent. Must be non-negative.
+     * @returns The number of the agent.
+     */
     addAgent(position: Vector2, radius?: number, maxSpeed?: number): int {
         console.assert(this.defaultAgent_ != null);
 
         let agent = new Agent(this);
         agent.id_ = this.agents_.length;
-        agent.position_.copy(position);
+        agent.position_.set(position);
         agent.radius_ = radius ?? this.defaultAgent_.radius_;
         agent.maxSpeed_ = maxSpeed ?? this.defaultAgent_.maxSpeed_;
         agent.maxNeighbors_ = this.defaultAgent_.maxNeighbors_;
         agent.neighborDist_ = this.defaultAgent_.neighborDist_;
         agent.timeHorizon_ = this.defaultAgent_.timeHorizon_;
         agent.timeHorizonObst_ = this.defaultAgent_.timeHorizonObst_;
-        agent.velocity_.copy(this.defaultAgent_.velocity_);
+        agent.velocity_.set(this.defaultAgent_.velocity_);
         this.agents_.push(agent);
         return agent.id_;
     }
@@ -82,7 +113,13 @@ export class Simulator {
         delete this.agents_[agentNo];
         this.agentCount--;
     }
-
+    /**
+     * Adds a new obstacle to the simulation.
+     * To add a "negative" obstacle, e.g. a bounding polygon around
+     * the environment, the vertices should be listed in clockwise order.
+     * @param vertices List of the vertices of the polygonal obstacle in counterclockwise order.
+     * @returns The number of the first vertex of the obstacle, or -1 when the number of vertices is less than two.
+     */
     addObstacle(vertices: Vector2[]): number {
         console.assert(vertices.length >= 2);
         if (vertices.length < 2)
@@ -130,7 +167,9 @@ export class Simulator {
         this.obstacleCount--;
         this.kdTree_.buildObstacleTree();
     }
-
+    /**
+     * Clears the simulation.
+     */
     clear(): void {
         this.agents_.length = 0;
         this.defaultAgent_ = null;
@@ -139,7 +178,11 @@ export class Simulator {
         this.globalTime_ = 0;
         this.timeStep_ = 0.1;
     }
-
+    /**
+     * Performs a simulation step and updates the two-dimensional
+     * position and two-dimensional velocity of each agent.
+     * @returns The global time after the simulation step.
+     */
     doStep(): number {
         this.kdTree_.buildAgentTree();
 
@@ -347,11 +390,23 @@ export class Simulator {
     public getTimeStep(): number {
         return this.timeStep_;
     }
-
+    /**
+     * Processes the obstacles that have been added so that they are accounted for in the simulation.
+     * Obstacles added to the simulation after this function has been called are not accounted for in the simulation.
+     */
     processObstacles(): void {
         this.kdTree_.buildObstacleTree();
     }
-
+    /**
+     * Performs a visibility query between the two specified points with respect to the obstacles.
+     * @param point1 The first point of the query.
+     * @param point2 The second point of the query.
+     * @param radius The minimal distance between the line connecting
+     * the two points and the obstacles in order for the points to be
+     * mutually visible (optional). Must be non-negative.
+     * @returns A boolean specifying whether the two points are mutually
+     * visible. Returns true when the obstacles have not been processed.
+     */
     queryVisibility(point1: Vector2, point2: Vector2, radius: number): boolean {
         return this.kdTree_.queryVisibility(point1, point2, radius);
     }
@@ -360,7 +415,33 @@ export class Simulator {
         if (this.agentCount == 0) return -1;
         return this.kdTree_.queryNearAgent(point, radius);
     }
-
+    /**
+     * Sets the default properties for any new agent that is added.
+     * @param neighborDist The default maximum distance (center point
+     * to center point) to other agents a new agent takes into account in
+     * the navigation. The larger this number, the longer he running time of
+     * the simulation. If the number is too low, the simulation will not be
+     * safe. Must be non-negative.
+     * @param maxNeighbors The default maximum number of other agents
+     * a new agent takes into account in the navigation. The larger this
+     * number, the longer the running time of the simulation. If the number
+     * is too low, the simulation will not be safe.
+     * @param timeHorizon The default minimal amount of time for
+     * which a new agent's velocities that are computed by the simulation
+     * are safe with respect to other agents. The larger this number, the
+     * sooner an agent will respond to the presence of other agents, but the
+     * less freedom the agent has in choosing its velocities. Must be
+     * positive.
+     * @param timeHorizonObst The default minimal amount of time for
+     * which a new agent's velocities that are computed by the simulation
+     * are safe with respect to obstacles. The larger this number, the
+     * sooner an agent will respond to the presence of obstacles, but the
+     * less freedom the agent has in choosing its velocities. Must be
+     * positive.
+     * @param radius The default radius of a new agent. Must be non-negative.
+     * @param maxSpeed The default maximum speed of a new agent. Must be non-negative.
+     * @param velocity The default initial two-dimensional linear velocity of a new agent.
+     */
     setAgentDefaults(neighborDist: number, maxNeighbors: int, timeHorizon: number, timeHorizonObst: number, radius: number, maxSpeed: number, velocity: Vector2 = new Vector2(0.0, 0.0)) {
         if (this.defaultAgent_ == null)
             this.defaultAgent_ = new Agent(this);
@@ -371,7 +452,7 @@ export class Simulator {
         this.defaultAgent_.radius_ = radius;
         this.defaultAgent_.timeHorizon_ = timeHorizon;
         this.defaultAgent_.timeHorizonObst_ = timeHorizonObst;
-        this.defaultAgent_.velocity_.copy(velocity);
+        this.defaultAgent_.velocity_.set(velocity);
     }
 
     public freezeAgent(agentNo: number): void {
@@ -416,7 +497,7 @@ export class Simulator {
      * @param position The replacement of the two-dimensional position.
      */
     public setAgentPosition(agentNo: number, position: Vector2): void {
-        this.agents_[agentNo].position_.copy(position);
+        this.agents_[agentNo].position_.set(position);
     }
 
     /**
@@ -425,7 +506,7 @@ export class Simulator {
      * @param prefVelocity The replacement of the two-dimensional preferred velocity.
      */
     public setAgentPrefVelocity(agentNo: number, prefVelocity: Vector2): void {
-        this.agents_[agentNo].prefVelocity_.copy(prefVelocity);
+        this.agents_[agentNo].prefVelocity_.set(prefVelocity);
     }
 
     /**
@@ -461,7 +542,7 @@ export class Simulator {
      * @param velocity The replacement two-dimensional linear velocity.
      */
     public setAgentVelocity(agentNo: number, velocity: Vector2): void {
-        this.agents_[agentNo].velocity_.copy(velocity);
+        this.agents_[agentNo].velocity_.set(velocity);
     }
 
     /**

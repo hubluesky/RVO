@@ -1,4 +1,3 @@
-import { KeyValuePair } from "./KeyValuePair";
 import { Line } from "./Line";
 import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
@@ -7,6 +6,13 @@ import { Vector2 } from "./Vector2";
 
 type int = number;
 
+class KeyValuePair<TKey, TValue> {
+    public constructor(readonly key: TKey, readonly value: TValue) { }
+}
+
+/**
+ * Defines an agent in the simulation.
+ */
 export class Agent {
     readonly agentNeighbors_ = new Array<KeyValuePair<number, Agent>>();
     readonly obstacleNeighbors_ = new Array<KeyValuePair<number, Obstacle>>();
@@ -28,6 +34,9 @@ export class Agent {
 
     public constructor(public readonly simulator: Simulator) { }
 
+    /**
+     * Computes the neighbors of this agent.
+     */
     computeNeighbors(): void {
         this.obstacleNeighbors_.length = 0;
         let rangeSq = RVOMath.sqr(this.timeHorizonObst_ * this.maxSpeed_ + this.radius_);
@@ -41,6 +50,9 @@ export class Agent {
         }
     }
 
+    /**
+     * Computes the new velocity of this agent.
+     */
     computeNewVelocity(): void {
         this.orcaLines_.length = 0;
 
@@ -138,7 +150,7 @@ export class Agent {
 
                 obstacle2 = obstacle1;
 
-                let leg1 = RVOMath.sqrt(distSq1 - radiusSq);
+                let leg1 = Math.sqrt(distSq1 - radiusSq);
                 leftLegDirection = new Vector2(relativePosition1.x * leg1 - relativePosition1.y * this.radius_, relativePosition1.x * this.radius_ + relativePosition1.y * leg1);
                 leftLegDirection = Vector2.divide(leftLegDirection, distSq1, leftLegDirection);
                 rightLegDirection = new Vector2(relativePosition1.x * leg1 + relativePosition1.y * this.radius_, -relativePosition1.x * this.radius_ + relativePosition1.y * leg1);
@@ -155,7 +167,7 @@ export class Agent {
 
                 obstacle1 = obstacle2;
 
-                let leg2 = RVOMath.sqrt(distSq2 - radiusSq);
+                let leg2 = Math.sqrt(distSq2 - radiusSq);
                 leftLegDirection = new Vector2(relativePosition2.x * leg2 - relativePosition2.y * this.radius_, relativePosition2.x * this.radius_ + relativePosition2.y * leg2);
                 leftLegDirection = Vector2.divide(leftLegDirection, distSq2, leftLegDirection);
                 rightLegDirection = new Vector2(relativePosition2.x * leg2 + relativePosition2.y * this.radius_, -relativePosition2.x * this.radius_ + relativePosition2.y * leg2);
@@ -163,7 +175,7 @@ export class Agent {
             } else {
                 /* Usual situation. */
                 if (obstacle1.convex_) {
-                    let leg1 = RVOMath.sqrt(distSq1 - radiusSq);
+                    let leg1 = Math.sqrt(distSq1 - radiusSq);
                     leftLegDirection = new Vector2(relativePosition1.x * leg1 - relativePosition1.y * this.radius_, relativePosition1.x * this.radius_ + relativePosition1.y * leg1);
                     leftLegDirection = Vector2.divide(leftLegDirection, distSq1, leftLegDirection);
                 } else {
@@ -172,7 +184,7 @@ export class Agent {
                 }
 
                 if (obstacle2.convex_) {
-                    let leg2 = RVOMath.sqrt(distSq2 - radiusSq);
+                    let leg2 = Math.sqrt(distSq2 - radiusSq);
                     rightLegDirection = new Vector2(relativePosition2.x * leg2 + relativePosition2.y * this.radius_, -relativePosition2.x * this.radius_ + relativePosition2.y * leg2);
                     rightLegDirection = Vector2.divide(rightLegDirection, distSq2, rightLegDirection);
                 } else {
@@ -330,14 +342,14 @@ export class Agent {
 
                 if (dotProduct1 < 0.0 && RVOMath.sqr(dotProduct1) > combinedRadiusSq * wLengthSq) {
                     /* Project on cut-off circle. */
-                    let wLength = RVOMath.sqrt(wLengthSq);
+                    let wLength = Math.sqrt(wLengthSq);
                     let unitW = Vector2.divide(w, wLength);
 
                     line.direction = new Vector2(unitW.y, -unitW.x);
                     u = Vector2.multiply(unitW, combinedRadius * invTimeHorizon - wLength);
                 } else {
                     /* Project on legs. */
-                    let leg = RVOMath.sqrt(distSq - combinedRadiusSq);
+                    let leg = Math.sqrt(distSq - combinedRadiusSq);
 
                     if (RVOMath.det(relativePosition, w) > 0.0) {
                         /* Project on left leg. */
@@ -382,13 +394,18 @@ export class Agent {
         }
     }
 
+    /**
+     * Inserts an agent neighbor into the set of neighbors of this agent.
+     * @param agent A pointer to the agent to be inserted.
+     * @param rangeSq The squared range around this agent.
+     */
     insertAgentNeighbor(agent: Agent, rangeSq: number): number {
         if (this != agent) {
             let distSq = RVOMath.absSq(Vector2.subtract(this.position_, agent.position_));
 
             if (distSq < rangeSq) {
                 if (this.agentNeighbors_.length < this.maxNeighbors_) {
-                    this.agentNeighbors_.push(new KeyValuePair<number, Agent>(distSq, agent));
+                    this.agentNeighbors_.push(new KeyValuePair(distSq, agent));
                 }
 
                 let i = this.agentNeighbors_.length - 1;
@@ -398,7 +415,7 @@ export class Agent {
                     --i;
                 }
 
-                this.agentNeighbors_[i] = new KeyValuePair<number, Agent>(distSq, agent);
+                this.agentNeighbors_[i] = new KeyValuePair(distSq, agent);
 
                 if (this.agentNeighbors_.length == this.maxNeighbors_) {
                     rangeSq = this.agentNeighbors_[this.agentNeighbors_.length - 1].key;
@@ -408,13 +425,18 @@ export class Agent {
         return rangeSq;
     }
 
+    /**
+     * Inserts a static obstacle neighbor into the set of neighbors of this agent.
+     * @param obstacle The number of the static obstacle to be inserted.
+     * @param rangeSq The squared range around this agent.
+     */
     insertObstacleNeighbor(obstacle: Obstacle, rangeSq: number): number {
         let nextObstacle = obstacle.next_;
 
         let distSq = RVOMath.distSqPointLineSegment(obstacle.point_, nextObstacle.point_, this.position_);
 
         if (distSq < rangeSq) {
-            this.obstacleNeighbors_.push(new KeyValuePair<number, Obstacle>(distSq, obstacle));
+            this.obstacleNeighbors_.push(new KeyValuePair(distSq, obstacle));
 
             let i = this.obstacleNeighbors_.length - 1;
 
@@ -422,19 +444,33 @@ export class Agent {
                 this.obstacleNeighbors_[i] = this.obstacleNeighbors_[i - 1];
                 --i;
             }
-            this.obstacleNeighbors_[i] = new KeyValuePair<number, Obstacle>(distSq, obstacle);
+            this.obstacleNeighbors_[i] = new KeyValuePair(distSq, obstacle);
         }
         return rangeSq;
     }
 
     private vpv = new Vector2();
+    /**
+     * Updates the two-dimensional position and two-dimensional velocity of this agent.
+     */
     update() {
         this.velocity_ = this.newVelocity_.clone();
         let vt = Vector2.multiply(this.velocity_, this.simulator.timeStep_, this.vpv);
         this.position_ = Vector2.add(this.position_, vt, this.position_);
-        // console.log("agent update", this.id_, this.velocity_);
     }
 
+    /**
+     * Solves a one-dimensional linear program on a specified line
+     * subject to linear constraints defined by lines and a circular
+     * constraint.
+     * @param lines Lines defining the linear constraints.
+     * @param lineNo The specified line constraint.
+     * @param radius The radius of the circular constraint.
+     * @param optVelocity The optimization velocity.
+     * @param directionOpt True if the direction should be optimized.
+     * @param result A reference to the result of the linear program.
+     * @returns velocity if successful.
+     */
     linearProgram1(lines: Array<Line>, lineNo: int, radius: number, optVelocity: Vector2, directionOpt: boolean): Vector2 {
         let lineNoDirection = lines[lineNo].direction, lineNoPoint = lines[lineNo].point;
         let dotProduct = Vector2.dot(lineNoPoint, lineNoDirection);
@@ -444,7 +480,7 @@ export class Agent {
         if (discriminant < 0.0)
             return null;
 
-        let sqrtDiscriminant = RVOMath.sqrt(discriminant);
+        let sqrtDiscriminant = Math.sqrt(discriminant);
         let tLeft = -dotProduct - sqrtDiscriminant;
         let tRight = -dotProduct + sqrtDiscriminant;
 
@@ -454,7 +490,7 @@ export class Agent {
             let denominator = RVOMath.det(lineNoDirection, lines[i].direction);
             let numerator = RVOMath.det(lines[i].direction, Vector2.subtract(lineNoPoint, lines[i].point, vt));
 
-            if (RVOMath.fAbs(denominator) <= RVOMath.RVO_EPSILON) {
+            if (Math.abs(denominator) <= RVOMath.RVO_EPSILON) {
                 /* Lines lineNo and i are (almost) parallel. */
                 if (numerator < 0.0)
                     return null;
@@ -508,6 +544,16 @@ export class Agent {
         return vector;
     }
 
+    /**
+     * Solves a two-dimensional linear program subject to linear
+     * constraints defined by lines and a circular constraint.
+     * @param lines Lines defining the linear constraints.
+     * @param radius The radius of the circular constraint.
+     * @param optVelocity The optimization velocity.
+     * @param directionOpt True if the direction should be optimized.
+     * @returns The number of the line it fails on, and the number of lines if successful.
+     * A reference to the result of the linear program.
+     */
     linearProgram2(lines: Array<Line>, radius: number, optVelocity: Vector2, directionOpt: boolean): { count: int, result: Vector2 } {
         let result: Vector2;
         if (directionOpt) {
@@ -541,6 +587,15 @@ export class Agent {
         return { count: lines.length, result };
     }
 
+    /**
+     * Solves a two-dimensional linear program subject to linear
+     * constraints defined by lines and a circular constraint.
+     * @param lines Lines defining the linear constraints.
+     * @param numObstLines Count of obstacle lines.
+     * @param beginLine The line on which the 2-d linear program failed.
+     * @param radius The radius of the circular constraint.
+     * @param result A reference to the result of the linear program.
+     */
     linearProgram3(lines: Array<Line>, numObstLines: int, beginLine: int, radius: number, result: Vector2): Vector2 {
         let distance = 0.0;
 
@@ -558,7 +613,7 @@ export class Agent {
 
                     let determinant = RVOMath.det(lines[i].direction, lines[j].direction);
 
-                    if (RVOMath.fAbs(determinant) <= RVOMath.RVO_EPSILON) {
+                    if (Math.abs(determinant) <= RVOMath.RVO_EPSILON) {
                         /* Line i and line j are parallel. */
                         if (Vector2.dot(lines[i].direction, lines[j].direction) > 0.0) {
                             /* Line i and line j point in the same direction. */

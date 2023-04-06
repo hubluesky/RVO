@@ -6,6 +6,9 @@ import { Vector2 } from "./Vector2";
 
 type int = number;
 
+/**
+ * Defines a node of an agent k-D tree.
+ */
 class AgentTreeNode {
     begin_: int;
     end_: int;
@@ -17,41 +20,83 @@ class AgentTreeNode {
     minY_: number;
 }
 
+/**
+ * Defines a pair of scalar values.
+ */
 class FloatPair {
+    /**
+     * Constructs and initializes a pair of scalar values.
+     * @param a The first scalar value.
+     * @param b The second scalar value.
+     */
     public constructor(private a: number, private b: number) { }
 
-    public static Less(pair1: FloatPair, pair2: FloatPair): boolean {
+    /**
+     * Returns true if the first pair of scalar values is less than the second pair of scalar values.
+     * @param pair1 The first pair of scalar values.
+     * @param pair2 The second pair of scalar values.
+     * @returns True if the first pair of scalar values is less than the second pair of scalar values.
+     */
+    public static lessThan(pair1: FloatPair, pair2: FloatPair): boolean {
         return pair1.a < pair2.a || !(pair2.a < pair1.a) && pair1.b < pair2.b;
     }
 
-    public static LessEqual(pair1: FloatPair, pair2: FloatPair): boolean {
-        return (pair1.a == pair2.a && pair1.b == pair2.b) || FloatPair.Less(pair1, pair2);
+    /**
+     * Returns true if the first pair of scalar values is less than or equal to the second pair of scalar values.
+     * @param pair1 The first pair of scalar values.
+     * @param pair2 The second pair of scalar values.
+     * @returns True if the first pair of scalar values is less than or equal to the second pair of scalar values.
+     */
+    public static lessThanEq(pair1: FloatPair, pair2: FloatPair): boolean {
+        return (pair1.a == pair2.a && pair1.b == pair2.b) || FloatPair.lessThan(pair1, pair2);
     }
 
-    public static Greater(pair1: FloatPair, pair2: FloatPair): boolean {
-        return !FloatPair.LessEqual(pair1, pair2);
+    /**
+     * Returns true if the first pair of scalar values is greater than the second pair of scalar values.
+     * @param pair1 The first pair of scalar values.
+     * @param pair2 The second pair of scalar values.
+     * @returns True if the first pair of scalar values is greater than the second pair of scalar values.
+     */
+    public static greaterThan(pair1: FloatPair, pair2: FloatPair): boolean {
+        return !FloatPair.lessThanEq(pair1, pair2);
     }
 
-    public static GreaterEqual(pair1: FloatPair, pair2: FloatPair): boolean {
-        return !FloatPair.Less(pair1, pair2);
+    /**
+     * Returns true if the first pair of scalar values is greater than or equal to the second pair of scalar values.
+     * @param pair1 The first pair of scalar values.
+     * @param pair2 The second pair of scalar values.
+     * @returns True if the first pair of scalar values is greater than or equal to the second pair of scalar values.
+     */
+    public static greaterThanEq(pair1: FloatPair, pair2: FloatPair): boolean {
+        return !FloatPair.lessThan(pair1, pair2);
     }
 }
 
+/**
+ * Defines a node of an obstacle k-D tree.
+ */
 class ObstacleTreeNode {
     obstacle_: Obstacle;
     left_: ObstacleTreeNode;
     right_: ObstacleTreeNode;
 };
 
-
+/**
+ * Defines k-D trees for agents and static obstacles in the simulation.
+ */
 export class KdTree {
+    /**
+     * The maximum size of an agent k-D tree leaf.
+     */
     private static readonly MAX_LEAF_SIZE = 10;
     private readonly agents_: Agent[] = [];
     private agentTree_: AgentTreeNode[];
     private obstacleTree_: ObstacleTreeNode;
 
     public constructor(public readonly simulator: Simulator) { }
-
+    /**
+     * Builds an agent k-D tree.
+     */
     buildAgentTree() {
         let agentsLength = this.simulator.agents_.length;
         if (this.agents_.length != agentsLength) {
@@ -73,6 +118,9 @@ export class KdTree {
         }
     }
 
+    /**
+     * Builds an obstacle k-D tree.
+     */
     buildObstacleTree() {
         this.obstacleTree_ = new ObstacleTreeNode();
 
@@ -91,15 +139,29 @@ export class KdTree {
         this.agents_.splice(index, 1);
         this.agentTree_.length = this.agents_.length * 2;
     }
-
+    /**
+     * Computes the agent neighbors of the specified agent.
+     * @param agent The agent for which agent neighbors are to be computed.
+     * @param rangeSq The squared range around the agent.
+     */
     computeAgentNeighbors(agent: Agent, rangeSq: number): number {
         return this.queryAgentTreeRecursive3(agent, rangeSq, 0);
     }
-
+    /**
+     * Computes the obstacle neighbors of the specified agent.
+     * @param agent The agent for which obstacle neighbors are to be computed.
+     * @param rangeSq The squared range around the agent.
+     */
     computeObstacleNeighbors(agent: Agent, rangeSq: number): void {
         this.queryObstacleTreeRecursive(agent, rangeSq, this.obstacleTree_);
     }
-
+    /**
+     * Queries the visibility between two points within a specified radius.
+     * @param q1 The first point between which visibility is to be tested.
+     * @param q2 The second point between which visibility is to be tested.
+     * @param radius The radius within which visibility is to be tested.
+     * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
+     */
     queryVisibility(q1: Vector2, q2: Vector2, radius: number): boolean {
         return this.queryVisibilityRecursive(q1, q2, radius, this.obstacleTree_);
     }
@@ -110,7 +172,12 @@ export class KdTree {
             return result.agentNo;
         return -1;
     }
-
+    /**
+     * Recursive method for building an agent k-D tree.
+     * @param begin The beginning agent k-D tree node node index.
+     * @param end The ending agent k-D tree node index.
+     * @param node The current agent k-D tree node index.
+     */
     buildAgentTreeRecursive(begin: int, end: int, node: int): void {
         let treeNode = this.agentTree_[node];
         treeNode.begin_ = begin;
@@ -166,7 +233,11 @@ export class KdTree {
             this.buildAgentTreeRecursive(left, end, treeNode.right_);
         }
     }
-
+    /**
+     * Recursive method for building an obstacle k-D tree.
+     * @param obstacles A list of obstacles.
+     * @returns An obstacle k-D tree node.
+     */
     buildObstacleTreeRecursive(obstacles: Obstacle[]): ObstacleTreeNode {
         if (obstacles.length == 0)
             return null;
@@ -204,13 +275,13 @@ export class KdTree {
                     ++rightSize;
                 }
 
-                if (FloatPair.GreaterEqual(new FloatPair(Math.max(leftSize, rightSize), Math.min(leftSize, rightSize)),
+                if (FloatPair.greaterThanEq(new FloatPair(Math.max(leftSize, rightSize), Math.min(leftSize, rightSize)),
                     new FloatPair(Math.max(minLeft, minRight), Math.min(minLeft, minRight)))) {
                     break;
                 }
             }
 
-            if (FloatPair.Less(new FloatPair(Math.max(leftSize, rightSize), Math.min(leftSize, rightSize)),
+            if (FloatPair.lessThan(new FloatPair(Math.max(leftSize, rightSize), Math.min(leftSize, rightSize)),
                 new FloatPair(Math.max(minLeft, minRight), Math.min(minLeft, minRight)))) {
                 minLeft = leftSize;
                 minRight = rightSize;
@@ -286,7 +357,6 @@ export class KdTree {
             return node;
         }
     }
-
     queryAgentTreeRecursive4(position: Vector2, rangeSq: number, agentNo: int, node: int): { rangeSq: number, agentNo: int } {
         let result = { rangeSq: rangeSq, agentNo: agentNo };
         let treeNode = this.agentTree_[node];
@@ -332,7 +402,12 @@ export class KdTree {
         }
         return result;
     }
-
+    /**
+     * Recursive method for computing the agent neighbors of the specified agent.
+     * @param agent The agent for which agent neighbors are to be computed.
+     * @param rangeSq The squared range around the agent.
+     * @param node The current agent k-D tree node index.
+     */
     queryAgentTreeRecursive3(agent: Agent, rangeSq: number, node: int): number {
         let treeNode = this.agentTree_[node];
         if (treeNode.end_ - treeNode.begin_ <= KdTree.MAX_LEAF_SIZE) {
@@ -372,7 +447,12 @@ export class KdTree {
         }
         return rangeSq;
     }
-
+    /**
+     * Recursive method for computing the obstacle neighbors of the specified agent.
+     * @param agent The agent for which obstacle neighbors are to be computed.
+     * @param rangeSq The squared range around the agent.
+     * @param node The current obstacle k-D node.
+     */
     queryObstacleTreeRecursive(agent: Agent, rangeSq: number, node: ObstacleTreeNode): void {
         if (node == null) return;
         let obstacle1 = node.obstacle_;
@@ -397,7 +477,14 @@ export class KdTree {
             this.queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= 0.0 ? node.right_ : node.left_);
         }
     }
-
+    /**
+     * Recursive method for querying the visibility between two points within a specified radius.
+     * @param q1 The first point between which visibility is to be tested.
+     * @param q2 The second point between which visibility is to be tested.
+     * @param radius The radius within which visibility is to be tested.
+     * @param node The current obstacle k-D node.
+     * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
+     */
     queryVisibilityRecursive(q1: Vector2, q2: Vector2, radius: number, node: ObstacleTreeNode): boolean {
         if (node == null) return true;
 
