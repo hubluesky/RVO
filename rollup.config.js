@@ -1,7 +1,7 @@
 import typescript from "rollup-plugin-typescript2";
 import dts from "rollup-plugin-dts";
 
-const input = "src3/Index.ts";
+const input = "src/Index.ts";
 const outputName = "rvo";
 
 export default [{
