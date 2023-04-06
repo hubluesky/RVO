@@ -134,7 +134,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
          * Specify the default parameters for agents that are subsequently
          * added.
          */
-        rvo.setAgentDefaults(radius * 4, 10, 5, 5, radius, 5.0);
+        rvo.setAgentDefaults(radius * 4, 10, 5, 5, radius, 3.0);
 
         /*
          * Add agents, specifying their start position, and store their
@@ -224,9 +224,9 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
             const position = rvo.getAgentPosition(agentNo);
             let goalVector = Vector2.subtract(goals[agentNo], position);
 
-            if (goalVector.lengthSq() > 1) {
-                goalVector = goalVector.normalize();
-            }
+            // if (goalVector.lengthSq() > 1) {
+                // goalVector = goalVector.normalize();
+            // }
 
             rvo.setAgentPrefVelocity(agentNo, goalVector);
 
@@ -260,8 +260,8 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
             if (direction.lengthSq() > radius * radius) {
                 result = false;
             } else {
-                // rvo.setAgentPrefVelocity(i, new Vector2());
-                // rvo.setAgentVelocity(i, new Vector2());
+                rvo.setAgentPrefVelocity(agentNo, new Vector2());
+                rvo.setAgentVelocity(agentNo, new Vector2());
                 // rvo.setAgentMaxNeighbors(i, 0);
                 // rvo.freezeAgent(i);
                 agentRender[agentNo].position = position.clone();
