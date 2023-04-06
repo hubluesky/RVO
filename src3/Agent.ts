@@ -81,11 +81,8 @@ export class Agent {
 
             for (let j = 0; j < this.orcaLines_.length; ++j) {
                 let orcaLine = this.orcaLines_[j];
-                let rp1i = Vector2.multiply(relativePosition1, invTimeHorizonObst, __vecTemp3);
-                let rp2i = Vector2.multiply(relativePosition2, invTimeHorizonObst, __vecTemp4);
-                if (Vector2.cross(Vector2.subtract(rp1i, orcaLine.point, rp1i), orcaLine.direction) - invTimeHorizonObst * this.radius_
-                    >= -RVOMath.RVO_EPSILON && Vector2.cross(Vector2.subtract(rp2i, orcaLine.point, rp2i), orcaLine.direction) - invTimeHorizonObst * this.radius_
-                    >= -RVOMath.RVO_EPSILON) {
+                if (Vector2.cross(Vector2.multiply(relativePosition1, invTimeHorizonObst, __vecTemp3).subtract(orcaLine.point), orcaLine.direction) - invTimeHorizonObst * this.radius_ >= -RVOMath.RVO_EPSILON &&
+                    Vector2.cross(Vector2.multiply(relativePosition2, invTimeHorizonObst, __vecTemp4).subtract(orcaLine.point), orcaLine.direction) - invTimeHorizonObst * this.radius_ >= -RVOMath.RVO_EPSILON) {
                     alreadyCovered = true;
                     break;
                 }
@@ -239,20 +236,18 @@ export class Agent {
                 /* Project on left cut-off circle. */
                 let unitW = vslc.normalize();
 
-                line.direction = new Vector2(unitW.y, -unitW.x);
-                let vw = Vector2.multiply(unitW, this.radius_ * invTimeHorizonObst, unitW);
-                line.point = Vector2.add(leftCutOff, vw);
+                line.direction.reset(unitW.y, -unitW.x);
+                line.point = unitW.multiply(this.radius_ * invTimeHorizonObst).add(leftCutOff);
                 this.orcaLines_.push(line);
 
                 continue;
             } else if (t > 1.0 && tRight < 0.0) {
                 /* Project on right cut-off circle. */
-                let vsrc = Vector2.subtract(this.velocity_, rightCutOff);
+                let vsrc = Vector2.subtract(this.velocity_, rightCutOff, __vecTemp6);
                 let unitW = vsrc.normalize();
 
-                line.direction = new Vector2(unitW.y, -unitW.x);
-                let vw = Vector2.multiply(unitW, this.radius_ * invTimeHorizonObst, unitW);
-                line.point = Vector2.add(rightCutOff, vw);
+                line.direction.reset(unitW.y, -unitW.x);
+                line.point = unitW.multiply(this.radius_ * invTimeHorizonObst).add(rightCutOff);
                 this.orcaLines_.push(line);
 
                 continue;

@@ -37,8 +37,6 @@ import { RVOMath } from "./RVOMath";
 import { Simulator } from "./Simulator";
 import { Vector2 } from "./Vector2";
 
-const __vecTemp1 = new Vector2();
-
 /**
  * Defines an agent in the simulation.
  */

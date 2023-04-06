@@ -5,6 +5,7 @@ import { Simulator } from "./Simulator";
 import { Vector2 } from "./Vector2";
 
 const __vecTemp1 = new Vector2();
+const __vecTemp2 = new Vector2();
 type int = number;
 
 /**
@@ -318,21 +319,17 @@ export class KdTree {
                     rightObstacles[rightCounter++] = obstacles[j];
                 } else {
                     /* Split obstacle j. */
-                    let i2si1 = Vector2.subtract(obstacleI2.point_, obstacleI1.point_);
-                    let j1si1 = Vector2.subtract(obstacleJ1.point_, obstacleI1.point_);
-                    let j1sj2 = Vector2.subtract(obstacleJ1.point_, obstacleJ2.point_);
-                    let t: number = Vector2.cross(i2si1, j1si1) / Vector2.cross(i2si1, j1sj2);
+                    let i2si1 = Vector2.subtract(obstacleI2.point_, obstacleI1.point_, __vecTemp1);
+                    let t: number = Vector2.cross(i2si1, Vector2.subtract(obstacleJ1.point_, obstacleI1.point_, __vecTemp2)) / Vector2.cross(i2si1, Vector2.subtract(obstacleJ1.point_, obstacleJ2.point_, __vecTemp2));
 
-                    let j2sj1 = Vector2.subtract(obstacleJ2.point_, obstacleJ1.point_);
-                    j2sj1 = Vector2.multiply(j2sj1, t, j2sj1);
-                    let splitPoint: Vector2 = Vector2.add(obstacleJ1.point_, j2sj1, j2sj1);
+                    let splitPoint: Vector2 = Vector2.subtract(obstacleJ2.point_, obstacleJ1.point_, __vecTemp1).multiply(t).add(obstacleJ1.point_);
 
                     let newObstacle = new Obstacle();
                     newObstacle.point_ = splitPoint;
                     newObstacle.previous_ = obstacleJ1;
                     newObstacle.next_ = obstacleJ2;
                     newObstacle.convex_ = true;
-                    newObstacle.direction_ = obstacleJ1.direction_.clone();
+                    newObstacle.direction_ = obstacleJ1.direction_;
 
                     newObstacle.id_ = this.simulator.obstacles_.length;
 
