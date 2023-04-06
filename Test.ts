@@ -68,7 +68,7 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
             let goalVector = Vector2.subtract(goals[agentNo], position);
 
             if (goalVector.lengthSq() > 1) {
-                goalVector = RVOMath.normalize(goalVector);
+                goalVector = goalVector.normalize();
             }
 
             rvo.setAgentPrefVelocity(agentNo, goalVector);
@@ -122,7 +122,7 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
 
 function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
     const goals: Vector2[] = [];
-    const radius = 2;
+    const radius = 5;
     const agentRender: { id: number, color: string, position?: Vector2 }[] = [];
     const obstacleRender: Vector2[][] = [];
 
@@ -140,8 +140,8 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
          * Add agents, specifying their start position, and store their
          * goals on the opposite side of the environment.
          */
-        const scale = 10;
-        const distance = 100;
+        const scale = 20;
+        const distance = 150;
 
         for (let i = 0; i < 5; ++i) {
             for (let j = 0; j < 5; ++j) {
@@ -179,7 +179,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
             }
         }
 
-        const ow = 20, oh = 20, ox = 40, oy = 40;
+        const ow = 35, oh = 35, ox = 80, oy = 80;
         const obstacle1: Vector2[] = [];
         obstacle1.push(new Vector2(-ow + ox, -oh + oy));
         obstacle1.push(new Vector2(+ow + ox, -oh + oy));
@@ -225,7 +225,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
             let goalVector = Vector2.subtract(goals[agentNo], position);
 
             if (goalVector.lengthSq() > 1) {
-                goalVector = RVOMath.normalize(goalVector);
+                goalVector = goalVector.normalize();
             }
 
             rvo.setAgentPrefVelocity(agentNo, goalVector);

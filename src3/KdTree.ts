@@ -321,7 +321,7 @@ export class KdTree {
                     let i2si1 = Vector2.subtract(obstacleI2.point_, obstacleI1.point_);
                     let j1si1 = Vector2.subtract(obstacleJ1.point_, obstacleI1.point_);
                     let j1sj2 = Vector2.subtract(obstacleJ1.point_, obstacleJ2.point_);
-                    let t: number = RVOMath.det(i2si1, j1si1) / RVOMath.det(i2si1, j1sj2);
+                    let t: number = Vector2.cross(i2si1, j1si1) / Vector2.cross(i2si1, j1sj2);
 
                     let j2sj1 = Vector2.subtract(obstacleJ2.point_, obstacleJ1.point_);
                     j2sj1 = Vector2.multiply(j2sj1, t, j2sj1);

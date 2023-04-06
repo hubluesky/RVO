@@ -5,7 +5,6 @@ import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
 import { Vector2 } from "./Vector2";
 
-const __vecTemp1 = new Vector2();
 type int = number;
 
 /*
@@ -154,7 +153,7 @@ export class Simulator {
                 obstacle.next_.previous_ = obstacle;
             }
 
-            obstacle.direction_ = RVOMath.normalize(Vector2.subtract(vertices[(i == vertices.length - 1 ? 0 : i + 1)], vertices[i], __vecTemp1), __vecTemp1).clone();
+            Vector2.subtract(vertices[(i == vertices.length - 1 ? 0 : i + 1)], vertices[i], obstacle.direction_).normalize();
 
             if (vertices.length == 2) {
                 obstacle.convex_ = true;

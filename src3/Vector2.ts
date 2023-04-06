@@ -46,6 +46,15 @@ export class Vector2 {
         return this.x * other.x + this.y * other.y;
     }
 
+    /**
+     * Computes the determinant of a two-dimensional square matrix with rows consisting of the specified two-dimensional vectors.
+     * @param other The bottom row of the two-dimensional square matrix.
+     * @returns The determinant of the two-dimensional square matrix.
+     */
+    public cross(other: Vector2): number {
+        return this.x * other.y - this.y * other.x;
+    }
+
     public multiply(scalar: number): this {
         this.x = this.x * scalar;
         this.y = this.y * scalar;
@@ -70,15 +79,25 @@ export class Vector2 {
         return this;
     }
 
-    public reset(): this {
-        this.x = 0;
-        this.y = 0;
+    public reset(x: number = 0, y: number = 0): this {
+        this.x = x;
+        this.y = y;
         return this;
     }
 
     public set(other: Vector2): Vector2 {
         this.x = other.x;
         this.y = other.y;
+        return this;
+    }
+
+    /**
+     * Computes the negation of the specified two-dimensional vector.
+     * @returns The negation of the specified two-dimensional vector.
+     */
+    public negate(): Vector2 {
+        this.x = -this.x;
+        this.y = -this.y;
         return this;
     }
 
@@ -153,6 +172,16 @@ export class Vector2 {
      */
     public static dot(a: Vector2, b: Vector2): number {
         return a.x * b.x + a.y * b.y;
+    }
+
+    /**
+     * Computes the determinant of a two-dimensional square matrix with rows consisting of the specified two-dimensional vectors.
+     * @param vector1 The top row of the two-dimensional square matrix.
+     * @param vector2 The bottom row of the two-dimensional square matrix.
+     * @returns The determinant of the two-dimensional square matrix.
+     */
+    public static cross(vector1: Vector2, vector2: Vector2): number {
+        return vector1.x * vector2.y - vector1.y * vector2.x;
     }
 
     /**

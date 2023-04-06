@@ -22,35 +22,6 @@ export class RVOMath {
     }
 
     /**
-     * Computes the length of a specified two-dimensional vector.
-     * @param vector The two-dimensional vector whose length is to be computed.
-     * @returns The length of the two-dimensional vector.
-     */
-    public static abs(vector: Vector2): number {
-        return Math.sqrt(vector.lengthSq());
-    }
-
-    /**
-     * Computes the normalization of the specified two-dimensional vector.
-     * @param vector The two-dimensional vector whose normalization is to be computed.
-     * @returns The normalization of the two-dimensional vector.
-     */
-    public static normalize(vector: Vector2, out: Vector2 = new Vector2): Vector2 {
-        let length = RVOMath.abs(vector);
-        return Vector2.divide(vector, length, out);
-    }
-
-    /**
-     * Computes the determinant of a two-dimensional square matrix with rows consisting of the specified two-dimensional vectors.
-     * @param vector1 The top row of the two-dimensional square matrix.
-     * @param vector2 The bottom row of the two-dimensional square matrix.
-     * @returns The determinant of the two-dimensional square matrix.
-     */
-    public static det(vector1: Vector2, vector2: Vector2): number {
-        return vector1.x * vector2.y - vector1.y * vector2.x;
-    }
-
-    /**
      * Computes the squared distance from a line segment with the specified endpoints to a specified point.
      * @param vector1 The first endpoint of the line segment.
      * @param vector2 The second endpoint of the line segment.
@@ -76,6 +47,6 @@ export class RVOMath {
      * @returns Positive when the point c lies to the left of the line ab.
      */
     public static leftOf(a: Vector2, b: Vector2, c: Vector2): number {
-        return RVOMath.det(Vector2.subtract(a, c, __vecTemp1), Vector2.subtract(b, a, __vecTemp2));
+        return Vector2.cross(Vector2.subtract(a, c, __vecTemp1), Vector2.subtract(b, a, __vecTemp2));
     }
 }
