@@ -7,35 +7,6 @@ import { Vector2 } from "./Vector2";
 
 type int = number;
 
-class Worker {
-    end_: int;
-    start_: int;
-
-    public constructor(public readonly simulator: Simulator, start: int, end: int) {
-        this.start_ = start;
-        this.end_ = end;
-    }
-
-    config(start: int, end: int): void {
-        this.start_ = start;
-        this.end_ = end;
-    }
-
-    step(): void {
-        for (let index = this.start_; index < this.end_; ++index) {
-            let agent = this.simulator.agents_[index];
-            agent.computeNeighbors();
-            agent.computeNewVelocity();
-        }
-    }
-
-    update(): void {
-        for (let index = this.start_; index < this.end_; ++index) {
-            this.simulator.agents_[index].update();
-        }
-    }
-}
-
 /*
  * Copyright 2008 University of North Carolina at Chapel Hill
  *
@@ -65,109 +36,57 @@ class Worker {
  * <http://gamma.cs.unc.edu/RVO2/>
  */
 export class Simulator {
-    agentNo2indexDict_: Map<int, int>; // get
-    index2agentNoDict_: Map<int, int>;
-    agents_: Array<Agent>;
-    obstacles_: Array<Obstacle>;
+    readonly agents_: Array<Agent> = [];
+    readonly obstacles_: Array<Obstacle> = [];
     kdTree_: KdTree;
     timeStep_: number;
 
-    static s_totalID = 0;
-    private static instance_ = new Simulator();
-    public static get Instance() { return Simulator.instance_; }
-
     private defaultAgent_: Agent;
-    private workers_: Worker[];
-    private numWorkers_: int;
-    private workerAgentCount_: int;
     private globalTime_: number;
+    public agentCount: number = 0;
+    public obstacleCount: number = 0;
 
     public constructor() {
         this.clear();
     }
 
-    delAgent(agentNo: int): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].needDelete_ = true;
+    public forEachAgent(callback: (agentNo: number) => void) {
+        for (const agentNo in this.agents_) {
+            callback(agentNo as any);
+            // callback(this.agents_[agentNo].id_);
+        }
     }
 
-    updateDeleteAgent(): void {
-        let isDelete = false;
-        for (let i = this.agents_.length - 1; i >= 0; i--) {
-            if (this.agents_[i].needDelete_) {
-                this.agents_.splice(i, 1);
-                isDelete = true;
-            }
-        }
-        if (isDelete)
-            this.onDelAgent();
-    }
-
-    addAgent(position: Vector2): int {
-        if (this.defaultAgent_ == null) {
-            return -1;
-        }
+    addAgent(position: Vector2, radius?: number, maxSpeed?: number): int {
+        console.assert(this.defaultAgent_ != null);
 
         let agent = new Agent(this);
-        agent.id_ = Simulator.s_totalID;
-        Simulator.s_totalID++;
+        agent.id_ = this.agents_.length;
+        agent.position_.copy(position);
+        agent.radius_ = radius ?? this.defaultAgent_.radius_;
+        agent.maxSpeed_ = maxSpeed ?? this.defaultAgent_.maxSpeed_;
         agent.maxNeighbors_ = this.defaultAgent_.maxNeighbors_;
-        agent.maxSpeed_ = this.defaultAgent_.maxSpeed_;
         agent.neighborDist_ = this.defaultAgent_.neighborDist_;
-        agent.position_ = position.clone();
-        agent.radius_ = this.defaultAgent_.radius_;
         agent.timeHorizon_ = this.defaultAgent_.timeHorizon_;
         agent.timeHorizonObst_ = this.defaultAgent_.timeHorizonObst_;
-        agent.velocity_ = this.defaultAgent_.velocity_.clone();
-        agent.prefVelocity_ = new Vector2();
+        agent.velocity_.copy(this.defaultAgent_.velocity_);
         this.agents_.push(agent);
-        this.onAddAgent();
         return agent.id_;
     }
 
-    onDelAgent(): void {
-        this.agentNo2indexDict_.clear();
-        this.index2agentNoDict_.clear();
 
-        for (let i = 0; i < this.agents_.length; i++) {
-            let agentNo = this.agents_[i].id_;
-            this.agentNo2indexDict_.set(agentNo, i);
-            this.index2agentNoDict_.set(i, agentNo);
-        }
-    }
-
-    onAddAgent(): void {
-        if (this.agents_.length == 0)
-            return;
-
-        let index = this.agents_.length - 1;
-        let agentNo = this.agents_[index].id_;
-        this.agentNo2indexDict_.set(agentNo, index);
-        this.index2agentNoDict_.set(index, agentNo);
-    }
-
-    addAgent2(position: Vector2, neighborDist: number, maxNeighbors: int, timeHorizon: number, timeHorizonObst: number, radius: number, maxSpeed: number, velocity: Vector2) {
-        let agent = new Agent(this);
-        agent.id_ = Simulator.s_totalID;
-        Simulator.s_totalID++;
-        agent.neighborDist_ = neighborDist;
-        agent.maxNeighbors_ = maxNeighbors;
-        agent.timeHorizon_ = timeHorizon;
-        agent.timeHorizonObst_ = timeHorizonObst;
-        agent.radius_ = radius;
-        agent.maxSpeed_ = maxSpeed;
-        agent.position_ = position.clone();
-        agent.velocity_ = velocity.clone();
-        agent.prefVelocity_ = new Vector2();
-        this.agents_.push(agent);
-        this.onAddAgent();
-        return agent.id_;
+    delAgent(agentNo: int): void {
+        const agent = this.agents_[agentNo];
+        if (agent == null) return;
+        this.kdTree_.delAgent(agent);
+        delete this.agents_[agentNo];
+        this.agentCount--;
     }
 
     addObstacle(vertices: Vector2[]): number {
-        if (vertices.length < 2) {
+        console.assert(vertices.length >= 2);
+        if (vertices.length < 2)
             return -1;
-        }
 
         let obstacleNo = this.obstacles_.length;
 
@@ -194,160 +113,238 @@ export class Simulator {
                 obstacle.convex_ = (RVOMath.leftOf(vertices[(i == 0 ? vertices.length - 1 : i - 1)], vertices[i], vertices[(i == vertices.length - 1 ? 0 : i + 1)]) >= 0);
             }
 
-            obstacle.id_ = this.obstacles_.length;
+            obstacle.id_ = obstacleNo;
+            // obstacle.id_ = this.obstacles_.length;
             this.obstacles_.push(obstacle);
         }
 
         return obstacleNo;
     }
 
+    public delObstacle(obstacleNo: number): void {
+        for (let i = this.obstacles_.length - 1; i >= 0; i--) {
+            const obstacle = this.obstacles_[i];
+            if (obstacle.id_ == obstacleNo)
+                this.obstacles_.splice(i, 1);
+        }
+        this.obstacleCount--;
+        this.kdTree_.buildObstacleTree();
+    }
+
     clear(): void {
-        this.agents_ = new Array<Agent>();
-        this.agentNo2indexDict_ = new Map<int, int>();
-        this.index2agentNoDict_ = new Map<int, int>();
+        this.agents_.length = 0;
         this.defaultAgent_ = null;
         this.kdTree_ = new KdTree(this);
-        this.obstacles_ = new Array<Obstacle>();
+        this.obstacles_.length = 0;
         this.globalTime_ = 0;
         this.timeStep_ = 0.1;
-
-        this.setNumWorkers(10);
     }
 
     doStep(): number {
-        this.updateDeleteAgent();
-
-        let numAgents = this.getNumAgents();
-        let workersLength = this.numWorkers_;
-        if (this.workers_ == null) {
-            this.workers_ = new Array<Worker>(workersLength);
-            this.workerAgentCount_ = numAgents;
-
-            for (let block = 0; block < workersLength; ++block) {
-                this.workers_[block] = new Worker(this, Math.trunc(block * numAgents / workersLength), Math.trunc((block + 1) * numAgents / workersLength));
-            }
-        }
-
-        if (this.workerAgentCount_ != numAgents) {
-            this.workerAgentCount_ = numAgents;
-            for (let block = 0; block < workersLength; ++block) {
-                this.workers_[block].config(Math.trunc(block * numAgents / workersLength), Math.trunc((block + 1) * numAgents / workersLength));
-            }
-        }
-
         this.kdTree_.buildAgentTree();
 
-        for (let block = 0; block < workersLength; ++block) {
-            this.workers_[block].step();
+        for (const agentNo in this.agents_) {
+            const agent = this.agents_[agentNo];
+            if (agent.isFreeze) continue;
+            agent.computeNeighbors();
+            agent.computeNewVelocity();
         }
 
-        for (let block = 0; block < workersLength; ++block) {
-            this.workers_[block].update();
+        for (const agentNo in this.agents_) {
+            const agent = this.agents_[agentNo];
+            if (agent.isFreeze) continue;
+            agent.update();
         }
 
         this.globalTime_ += this.timeStep_;
         return this.globalTime_;
     }
 
-    getAgentAgentNeighbor(agentNo: int, neighborNo: int): int {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].agentNeighbors_[neighborNo].value.id_;
+    /**
+     * Returns the specified agent neighbor of the specified agent.
+     * @param agentNo The number of the agent whose agent neighbor is to be retrieved.
+     * @param neighborNo The number of the agent neighbor to be retrieved.
+     * @returns The number of the neighboring agent.
+     */
+    public getAgentAgentNeighbor(agentNo: number, neighborNo: number): number {
+        return this.agents_[agentNo].agentNeighbors_[neighborNo].value.id_;
     }
 
-    getAgentMaxNeighbors(agentNo: int): int {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].maxNeighbors_;
+    /**
+     * Returns the maximum neighbor count of a specified agent.
+     * @param agentNo The number of the agent whose maximum neighbor count is to be retrieved.
+     * @returns The present maximum neighbor count of the agent.
+     */
+    public getAgentMaxNeighbors(agentNo: number): number {
+        return this.agents_[agentNo].maxNeighbors_;
     }
 
-    getAgentMaxSpeed(agentNo: int): number {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].maxSpeed_;
+    /**
+     * Returns the maximum speed of a specified agent.
+     * @param agentNo The number of the agent whose maximum speed is to be retrieved.
+     * @returns The present maximum speed of the agent.
+     */
+    public getAgentMaxSpeed(agentNo: number): number {
+        return this.agents_[agentNo].maxSpeed_;
     }
 
-    getAgentNeighborDist(agentNo: int): number {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].neighborDist_;
+    /**
+     * Returns the maximum neighbor distance of a specified agent.
+     * @param agentNo The number of the agent whose maximum neighbor distance is to be retrieved.
+     * @returns The present maximum neighbor distance of the agent.
+     */
+    public getAgentNeighborDist(agentNo: number): number {
+        return this.agents_[agentNo].neighborDist_;
     }
 
-    getAgentNumAgentNeighbors(agentNo: int): int {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].agentNeighbors_.length;
+    /**
+     * Returns the count of agent neighbors taken into account to
+     * compute the current velocity for the specified agent.
+     * @param agentNo The number of the agent whose count of agent neighbors is to be retrieved.
+     * @returns The count of agent neighbors taken into account to compute
+     * the current velocity for the specified agent.
+     */
+    public getAgentNumAgentNeighbors(agentNo: number): number {
+        return this.agents_[agentNo].agentNeighbors_.length;
     }
 
-    getAgentNumObstacleNeighbors(agentNo: int): int {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].obstacleNeighbors_.length;
+    /**
+     * Returns the count of obstacle neighbors taken into account
+     * to compute the current velocity for the specified agent.
+     * @param agentNo The number of the agent whose count of obstacle neighbors is to be retrieved.
+     * @returns The count of obstacle neighbors taken into account to
+     * compute the current velocity for the specified agent.
+     */
+    public getAgentNumObstacleNeighbors(agentNo: number): number {
+        return this.agents_[agentNo].obstacleNeighbors_.length;
     }
 
-    getAgentObstacleNeighbor(agentNo: int, neighborNo: int): int {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].obstacleNeighbors_[neighborNo].value.id_;
+    /**
+     * Returns the specified obstacle neighbor of the specified
+     * agent.
+     * @param agentNo The number of the agent whose obstacle neighbor is to be retrieved.
+     * @param neighborNo The number of the obstacle neighbor to be retrieved.
+     * @returns The number of the first vertex of the neighboring obstacle
+     * edge.
+     */
+    public getAgentObstacleNeighbor(agentNo: number, neighborNo: number): number {
+        return this.agents_[agentNo].obstacleNeighbors_[neighborNo].value.id_;
     }
 
-    getAgentOrcaLines(agentNo: int): Line[] {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].orcaLines_;
+    /**
+     * Returns the ORCA constraints of the specified agent.
+     * The halfplane to the left of each line is the region of
+     * permissible velocities with respect to that ORCA constraint.
+     * @param agentNo The number of the agent whose ORCA constraints
+     * are to be retrieved.
+     * @returns A list of lines representing the ORCA constraints.
+     */
+    public getAgentOrcaLines(agentNo: number): readonly Line[] {
+        return this.agents_[agentNo].orcaLines_;
     }
 
-    getAgentPosition(agentNo: int): Vector2 {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].position_;
+    /**
+     * Returns the two-dimensional position of a specified agent.
+     * @param agentNo The number of the agent whose two-dimensional position is to be retrieved.
+     * @returns The present two-dimensional position of the (center of the) agent.
+     */
+    public getAgentPosition(agentNo: number): Vector2 {
+        return this.agents_[agentNo].position_;
     }
 
-    getAgentPrefVelocity(agentNo: int): Vector2 {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].prefVelocity_;
+    /**
+     * Returns the two-dimensional preferred velocity of a specified agent.
+     * @param agentNo The number of the agent whose two-dimensional preferred velocity is to be retrieved.
+     * @returns The present two-dimensional preferred velocity of the agent.
+     */
+    public getAgentPrefVelocity(agentNo: number): Vector2 {
+        return this.agents_[agentNo].prefVelocity_;
     }
 
-    getAgentRadius(agentNo: int): number {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].radius_;
+    /**
+     * Returns the radius of a specified agent.
+     * @param agentNo The number of the agent whose radius is to be retrieved.
+     * @returns The present radius of the agent.
+     */
+    public getAgentRadius(agentNo: number): number {
+        return this.agents_[agentNo].radius_;
     }
 
-    getAgentTimeHorizon(agentNo: int): number {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].timeHorizon_;
+    /**
+     * Returns the time horizon of a specified agent.
+     * @param agentNo The number of the agent whose time horizon is to be retrieved.
+     * @returns The present time horizon of the agent.
+     */
+    public getAgentTimeHorizon(agentNo: number): number {
+        return this.agents_[agentNo].timeHorizon_;
     }
 
-    getAgentTimeHorizonObst(agentNo: int): number {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].timeHorizonObst_;
+    /**
+     * Returns the time horizon with respect to obstacles of a specified agent.
+     * @param agentNo The number of the agent whose time horizon with respect to obstacles is to be retrieved.
+     * @returns The present time horizon with respect to obstacles of the agent.
+     */
+    public getAgentTimeHorizonObst(agentNo: number): number {
+        return this.agents_[agentNo].timeHorizonObst_;
     }
 
-    getAgentVelocity(agentNo: int): Vector2 {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        return this.agents_[index].velocity_;
+    /**
+     * Returns the two-dimensional linear velocity of a specified agent.
+     * @param agentNo The number of the agent whose two-dimensional linear velocity is to be retrieved.
+     * @returns The present two-dimensional linear velocity of the agent.
+     */
+    public getAgentVelocity(agentNo: number): Vector2 {
+        return this.agents_[agentNo].velocity_;
     }
 
-    getGlobalTime(): number {
+    /**
+     * Returns the global time of the simulation.
+     * @returns The present global time of the simulation (zero initially).
+     */
+    public getGlobalTime(): number {
         return this.globalTime_;
     }
 
-    getNumAgents(): number {
-        return this.agents_.length;
-    }
-
-    getNumObstacleVertices(): int {
+    /**
+     * Returns the count of obstacle vertices in the simulation.
+     * @returns The count of obstacle vertices in the simulation.
+     */
+    public getNumObstacleVertices(): number {
         return this.obstacles_.length;
     }
 
-    getNumWorkers(): int {
-        return this.numWorkers_;
-    }
-
-    getObstacleVertex(vertexNo: int): Vector2 {
+    /**
+     * Returns the two-dimensional position of a specified obstacle vertex.
+     * @param vertexNo The number of the obstacle vertex to be retrieved.
+     * @returns The two-dimensional position of the specified obstacle vertex.
+     */
+    public getObstacleVertex(vertexNo: number): Vector2 {
         return this.obstacles_[vertexNo].point_;
     }
 
-    getNextObstacleVertexNo(vertexNo: int): int {
+    /**
+     * Returns the number of the obstacle vertex succeeding the specified obstacle vertex in its polygon.
+     * @param vertexNo The number of the obstacle vertex whose successor is to be retrieved.
+     * @returns The number of the obstacle vertex succeeding the specified obstacle vertex in its polygon.
+     */
+    public getNextObstacleVertexNo(vertexNo: number): number {
         return this.obstacles_[vertexNo].next_.id_;
     }
 
-    getPrevObstacleVertexNo(vertexNo: int): int {
+    /**
+     * Returns the number of the obstacle vertex preceding the specified obstacle vertex in its polygon.
+     * @param vertexNo The number of the obstacle vertex whose predecessor is to be retrieved.
+     * @returns The number of the obstacle vertex preceding the specified obstacle vertex in its polygon.
+     */
+    public getPrevObstacleVertexNo(vertexNo: number): number {
         return this.obstacles_[vertexNo].previous_.id_;
     }
 
-    getTimeStep(): number {
+    /**
+     * Returns the time step of the simulation.
+     * @returns The present time step of the simulation.
+     */
+    public getTimeStep(): number {
         return this.timeStep_;
     }
 
@@ -360,15 +357,13 @@ export class Simulator {
     }
 
     queryNearAgent(point: Vector2, radius: number): int {
-        if (this.getNumAgents() == 0)
-            return -1;
+        if (this.agentCount == 0) return -1;
         return this.kdTree_.queryNearAgent(point, radius);
     }
 
     setAgentDefaults(neighborDist: number, maxNeighbors: int, timeHorizon: number, timeHorizonObst: number, radius: number, maxSpeed: number, velocity: Vector2 = new Vector2(0.0, 0.0)) {
-        if (this.defaultAgent_ == null) {
+        if (this.defaultAgent_ == null)
             this.defaultAgent_ = new Agent(this);
-        }
 
         this.defaultAgent_.maxNeighbors_ = maxNeighbors;
         this.defaultAgent_.maxSpeed_ = maxSpeed;
@@ -376,65 +371,112 @@ export class Simulator {
         this.defaultAgent_.radius_ = radius;
         this.defaultAgent_.timeHorizon_ = timeHorizon;
         this.defaultAgent_.timeHorizonObst_ = timeHorizonObst;
-        this.defaultAgent_.velocity_ = velocity;
+        this.defaultAgent_.velocity_.copy(velocity);
     }
 
-    setAgentMaxNeighbors(agentNo: int, maxNeighbors: int): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].maxNeighbors_ = maxNeighbors;
+    public freezeAgent(agentNo: number): void {
+        this.agents_[agentNo].isFreeze = true;
+        this.agents_[agentNo].velocity_.reset();
     }
 
-    setAgentMaxSpeed(agentNo: int, maxSpeed: number): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].maxSpeed_ = maxSpeed;
+    public unfreezeAgent(agentNo: number): void {
+        this.agents_[agentNo].isFreeze = false;
     }
 
-    setAgentNeighborDist(agentNo: int, neighborDist: number): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].neighborDist_ = neighborDist;
+    /**
+     * Sets the maximum neighbor count of a specified agent.
+     * @param agentNo The number of the agent whose maximum neighbor count is to be modified.
+     * @param maxNeighbors The replacement maximum neighbor count.
+     */
+    public setAgentMaxNeighbors(agentNo: number, maxNeighbors: number): void {
+        this.agents_[agentNo].maxNeighbors_ = maxNeighbors;
     }
 
-    setAgentPosition(agentNo: int, position: Vector2): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].position_ = position;
+    /**
+     * Sets the maximum speed of a specified agent.
+     * @param agentNo The number of the agent whose maximum speed is to be modified.
+     * @param maxSpeed The replacement maximum speed. Must be non-negative.
+     */
+    public setAgentMaxSpeed(agentNo: number, maxSpeed: number): void {
+        this.agents_[agentNo].maxSpeed_ = maxSpeed;
     }
 
-    setAgentPrefVelocity(agentNo: int, prefVelocity: Vector2): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].prefVelocity_.copy(prefVelocity);
+    /**
+     * Sets the maximum neighbor distance of a specified agent.
+     * @param agentNo The number of the agent whose maximum neighbor distance is to be modified.
+     * @param neighborDist The replacement maximum neighbor distance. Must be non-negative.
+     */
+    public setAgentNeighborDist(agentNo: number, neighborDist: number): void {
+        this.agents_[agentNo].neighborDist_ = neighborDist;
     }
 
-    setAgentRadius(agentNo: int, radius: number): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].radius_ = radius;
+    /**
+     * Sets the two-dimensional position of a specified agent.
+     * @param agentNo The number of the agent whose two-dimensional position is to be modified.
+     * @param position The replacement of the two-dimensional position.
+     */
+    public setAgentPosition(agentNo: number, position: Vector2): void {
+        this.agents_[agentNo].position_.copy(position);
     }
 
-    setAgentTimeHorizon(agentNo: int, timeHorizon: number) {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].timeHorizon_ = timeHorizon;
+    /**
+     * Sets the two-dimensional preferred velocity of a specified agent.
+     * @param agentNo The number of the agent whose two-dimensional preferred velocity is to be modified.
+     * @param prefVelocity The replacement of the two-dimensional preferred velocity.
+     */
+    public setAgentPrefVelocity(agentNo: number, prefVelocity: Vector2): void {
+        this.agents_[agentNo].prefVelocity_.copy(prefVelocity);
     }
 
-    setAgentTimeHorizonObst(agentNo: int, timeHorizonObst: number): void {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].timeHorizonObst_ = timeHorizonObst;
+    /**
+     * Sets the radius of a specified agent.
+     * @param agentNo The number of the agent whose radius is to be modified.
+     * @param radius The replacement radius. Must be non-negative.
+     */
+    public setAgentRadius(agentNo: number, radius: number): void {
+        this.agents_[agentNo].radius_ = radius;
     }
 
-    setAgentVelocity(agentNo: int, velocity: Vector2) {
-        let index = this.agentNo2indexDict_.get(agentNo);
-        this.agents_[index].velocity_ = velocity;
+    /**
+     * Sets the time horizon of a specified agent with respect to other agents.
+     * @param agentNo The number of the agent whose time horizon is to be modified.
+     * @param timeHorizon The replacement time horizon with respect to other agents. Must be positive.
+     */
+    public setAgentTimeHorizon(agentNo: number, timeHorizon: number): void {
+        this.agents_[agentNo].timeHorizon_ = timeHorizon;
     }
 
-    setGlobalTime(globalTime: number): void {
+    /**
+     * Sets the time horizon of a specified agent with respect to obstacles.
+     * @param agentNo The number of the agent whose time horizon with respect to obstacles is to be modified.
+     * @param timeHorizonObst The replacement time horizon with respect to obstacles. Must be positive.
+     */
+    public setAgentTimeHorizonObst(agentNo: number, timeHorizonObst: number): void {
+        this.agents_[agentNo].timeHorizonObst_ = timeHorizonObst;
+    }
+
+    /**
+     * Sets the two-dimensional linear velocity of a specified agent.
+     * @param agentNo The number of the agent whose two-dimensional linear velocity is to be modified.
+     * @param velocity The replacement two-dimensional linear velocity.
+     */
+    public setAgentVelocity(agentNo: number, velocity: Vector2): void {
+        this.agents_[agentNo].velocity_.copy(velocity);
+    }
+
+    /**
+     * Sets the global time of the simulation.
+     * @param globalTime The global time of the simulation.
+     */
+    public setGlobalTime(globalTime: number): void {
         this.globalTime_ = globalTime;
     }
 
-    setNumWorkers(numWorkers: number) {
-        this.numWorkers_ = numWorkers;
-        this.workers_ = null;
-        this.workerAgentCount_ = 0;
-    }
-
-    setTimeStep(timeStep: number): void {
+    /**
+     * Sets the time step of the simulation.
+     * @param timeStep The time step of the simulation. Must be positive.
+     */
+    public setTimeStep(timeStep: number): void {
         this.timeStep_ = timeStep;
     }
 }

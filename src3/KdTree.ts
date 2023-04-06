@@ -46,7 +46,7 @@ class ObstacleTreeNode {
 
 export class KdTree {
     private static readonly MAX_LEAF_SIZE = 10;
-    private agents_: Agent[];
+    private readonly agents_: Agent[] = [];
     private agentTree_: AgentTreeNode[];
     private obstacleTree_: ObstacleTreeNode;
 
@@ -54,12 +54,12 @@ export class KdTree {
 
     buildAgentTree() {
         let agentsLength = this.simulator.agents_.length;
-        if (this.agents_ == null || this.agents_.length != agentsLength) {
-            this.agents_ = new Array<Agent>(agentsLength);
+        if (this.agents_.length != agentsLength) {
+            this.agents_.length = 0;
 
-            for (let i = 0; i < agentsLength; ++i) {
-                this.agents_[i] = this.simulator.agents_[i];
-            }
+            this.simulator.forEachAgent((agentNo) => {
+                this.agents_.push(this.simulator.agents_[agentNo]);
+            });
 
             this.agentTree_ = new Array<AgentTreeNode>(2 * this.agents_.length);
 
@@ -68,7 +68,7 @@ export class KdTree {
             }
         }
 
-        if (this.agents_.length != 0) {
+        if (this.agents_.length > 0) {
             this.buildAgentTreeRecursive(0, this.agents_.length, 0);
         }
     }
@@ -83,6 +83,13 @@ export class KdTree {
         }
 
         this.obstacleTree_ = this.buildObstacleTreeRecursive(obstacles);
+    }
+
+    public delAgent(agent: Agent): void {
+        const index = this.agents_.indexOf(agent);
+        console.assert(index != -1);
+        this.agents_.splice(index, 1);
+        this.agentTree_.length = this.agents_.length * 2;
     }
 
     computeAgentNeighbors(agent: Agent, rangeSq: number): number {

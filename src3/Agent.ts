@@ -8,12 +8,12 @@ import { Vector2 } from "./Vector2";
 type int = number;
 
 export class Agent {
-    agentNeighbors_ = new Array<KeyValuePair<number, Agent>>();
-    obstacleNeighbors_ = new Array<KeyValuePair<number, Obstacle>>();
-    orcaLines_ = new Array<Line>();
-    position_: Vector2;
-    prefVelocity_: Vector2;
-    velocity_: Vector2;
+    readonly agentNeighbors_ = new Array<KeyValuePair<number, Agent>>();
+    readonly obstacleNeighbors_ = new Array<KeyValuePair<number, Obstacle>>();
+    readonly orcaLines_ = new Array<Line>();
+    position_: Vector2 = new Vector2();
+    prefVelocity_: Vector2 = new Vector2();
+    velocity_: Vector2 = new Vector2();
     id_: int = 0;
     maxNeighbors_: int = 0;
     maxSpeed_: number = 0;
@@ -22,6 +22,7 @@ export class Agent {
     timeHorizon_: number = 0;
     timeHorizonObst_: number = 0;
     needDelete_: boolean = false;
+    isFreeze: boolean = false;
 
     private newVelocity_: Vector2 = new Vector2();
 

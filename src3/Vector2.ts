@@ -30,6 +30,12 @@ export class Vector2 {
         return this;
     }
 
+    public reset(): this {
+        this.x = 0;
+        this.y = 0;
+        return this;
+      }
+
     public copy(other: Vector2): Vector2 {
         this.x = other.x;
         this.y = other.y;

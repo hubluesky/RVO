@@ -57,18 +57,18 @@ export class Simulator {
   public agentCount: number = 0;
   public obstacleCount: number = 0;
 
-  public forEachAgent(callback: (agentNo: number) => void) {
-    for (const agentNo in this.agents_) {
-      callback(agentNo as any);
-      // callback(this.agents_[agentNo].id_);
-    }
-  }
-
   /**
    * Constructs and initializes a simulation.
    */
   constructor() {
     this.clear();
+  }
+
+  public forEachAgent(callback: (agentNo: number) => void) {
+    for (const agentNo in this.agents_) {
+      callback(agentNo as any);
+      // callback(this.agents_[agentNo].id_);
+    }
   }
 
   /**
@@ -110,7 +110,7 @@ export class Simulator {
     agent.maxNeighbors_ = maxNeighbors;
     agent.maxSpeed_ = maxSpeed;
     agent.neighborDist_ = neighborDist;
-    agent.position_ = position;
+    agent.position_.set(position);
     agent.radius_ = radius;
     agent.timeHorizon_ = timeHorizon;
     agent.timeHorizonObst_ = timeHorizonObst;
