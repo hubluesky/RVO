@@ -126,12 +126,7 @@ export class KdTree {
     buildObstacleTree() {
         this.obstacleTree_ = new ObstacleTreeNode();
 
-        let obstacles = new Array<Obstacle>(this.simulator.obstacles_.length);
-
-        for (let i = 0; i < this.simulator.obstacles_.length; ++i) {
-            obstacles[i] = this.simulator.obstacles_[i];
-        }
-
+        let obstacles =  Array.from(this.simulator.obstacles_);
         this.obstacleTree_ = this.buildObstacleTreeRecursive(obstacles);
     }
 
@@ -240,7 +235,7 @@ export class KdTree {
      * @param obstacles A list of obstacles.
      * @returns An obstacle k-D tree node.
      */
-    buildObstacleTreeRecursive(obstacles: Obstacle[]): ObstacleTreeNode {
+    buildObstacleTreeRecursive(obstacles: readonly Obstacle[]): ObstacleTreeNode {
         if (obstacles.length == 0)
             return null;
 
@@ -331,7 +326,8 @@ export class KdTree {
                     newObstacle.convex_ = true;
                     newObstacle.direction_ = obstacleJ1.direction_;
 
-                    newObstacle.id_ = this.simulator.obstacles_.length;
+                    newObstacle.id_ = obstacleJ1.id_;
+                    // newObstacle.id_ = this.simulator.obstacles_.length;
 
                     this.simulator.obstacles_.push(newObstacle);
 

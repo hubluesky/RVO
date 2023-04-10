@@ -143,7 +143,7 @@ export class Simulator {
             let obstacle = new Obstacle();
             obstacle.point_ = vertices[i];
 
-            if (i != 0) {
+            if (i > 0) {
                 obstacle.previous_ = this.obstacles_[this.obstacles_.length - 1];
                 obstacle.previous_.next_ = obstacle;
             }
@@ -169,14 +169,20 @@ export class Simulator {
         return obstacleNo;
     }
 
-    public delObstacle(obstacleNo: number): void {
+    public delObstacle(obstacleNo: number): boolean {
+        let result: boolean = false;
         for (let i = this.obstacles_.length - 1; i >= 0; i--) {
             const obstacle = this.obstacles_[i];
-            if (obstacle.id_ == obstacleNo)
+            if (obstacle.id_ == obstacleNo) {
+                result = true;
                 this.obstacles_.splice(i, 1);
+                // if (obstacle.previous_) obstacle.previous_.next_ = null;
+                // if (obstacle.next_) obstacle.next_.previous_ = null;
+            }
         }
-        this.obstacleCount--;
-        this.kdTree_.buildObstacleTree();
+        if (result)
+            this.obstacleCount--;
+        return result;
     }
     /**
      * Clears the simulation.

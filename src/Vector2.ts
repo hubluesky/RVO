@@ -105,6 +105,16 @@ export class Vector2 {
         return new Vector2(this.x, this.y);
     }
 
+    public static distanceSq(vector1: Vector2, vector2: Vector2): number {
+        const x = vector1.x - vector2.x;
+        const y = vector1.y - vector2.y;
+        return x * x + y * y;
+    }
+
+    public static distance(vector1: Vector2, vector2: Vector2): number {
+        return Math.sqrt(Vector2.distanceSq(vector1, vector2));
+    }
+
     /**
      * Computes the vector sum of the two specified two-dimensional
      * vectors.

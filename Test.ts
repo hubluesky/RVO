@@ -1,5 +1,5 @@
 
-import { RVOMath, Simulator, Vector2 } from "rvo";
+import { Simulator, Vector2 } from "rvo";
 
 const rvo = new Simulator();
 
@@ -24,7 +24,7 @@ function drawPath(context: CanvasRenderingContext2D, path: readonly Vector2[], o
 function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
     const goals: Vector2[] = [];
     const radius = 5;
-    const agentRender: { id: number, color: string, position?: Vector2 }[] = [];
+    const agentRender: { id: number, color?: string, position?: Vector2 }[] = [];
     const setupScenario = function () {
         /* Specify the global time step of the simulation. */
         rvo.setTimeStep(0.55);
@@ -43,7 +43,7 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
         const distance = 280;
         for (let i = 0; i < agentCount; ++i) {
             const position = new Vector2(Math.cos(i * 2 * Math.PI / agentCount), Math.sin(i * 2 * Math.PI / agentCount));
-            const render = { id: i, color: null, arrive: false };
+            const render = { id: i, color: "#ffff00", arrive: false };
             agentRender.push(render);
             if (i % 5 == 0) {
                 goals.push(position.clone().multiply(+100));
@@ -185,7 +185,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
         obstacle1.push(new Vector2(+ow + ox, -oh + oy));
         obstacle1.push(new Vector2(+ow + ox, +oh + oy));
         obstacle1.push(new Vector2(-ow + ox, +oh + oy));
-        rvo.addObstacle(obstacle1);
+        const obstacleId1 = rvo.addObstacle(obstacle1);
         obstacleRender.push(obstacle1);
 
         const obstacle2: Vector2[] = [];
@@ -193,7 +193,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
         obstacle2.push(new Vector2(+ow - ox, -oh + oy));
         obstacle2.push(new Vector2(+ow - ox, +oh + oy));
         obstacle2.push(new Vector2(-ow - ox, +oh + oy));
-        rvo.addObstacle(obstacle2);
+        const obstacleId2 = rvo.addObstacle(obstacle2);
         obstacleRender.push(obstacle2);
 
         const obstacle3: Vector2[] = [];
@@ -201,7 +201,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
         obstacle3.push(new Vector2(+ow - ox, -oh - oy));
         obstacle3.push(new Vector2(+ow - ox, +oh - oy));
         obstacle3.push(new Vector2(-ow - ox, +oh - oy));
-        rvo.addObstacle(obstacle3);
+        const obstacleId3 = rvo.addObstacle(obstacle3);
         obstacleRender.push(obstacle3);
 
         const obstacle4: Vector2[] = [];
@@ -209,10 +209,13 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
         obstacle4.push(new Vector2(+ow + ox, -oh - oy));
         obstacle4.push(new Vector2(+ow + ox, +oh - oy));
         obstacle4.push(new Vector2(-ow + ox, +oh - oy));
-        rvo.addObstacle(obstacle4);
+        const obstacleId4 = rvo.addObstacle(obstacle4);
         obstacleRender.push(obstacle4);
 
         rvo.processObstacles();
+
+        // rvo.delObstacle(obstacleId3);
+        // rvo.processObstacles();
     }
 
     const setPreferredVelocities = function () {
@@ -225,7 +228,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
             let goalVector = Vector2.subtract(goals[agentNo], position);
 
             // if (goalVector.lengthSq() > 1) {
-                // goalVector = goalVector.normalize();
+            // goalVector = goalVector.normalize();
             // }
 
             rvo.setAgentPrefVelocity(agentNo, goalVector);
@@ -290,7 +293,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
 export function main() {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
     const context = canvas.getContext("2d");
-    blockExample(context, new Vector2(canvas.width / 2, canvas.height / 2));
+    blockExample(context!, new Vector2(canvas.width / 2, canvas.height / 2));
     // circleExample(context, new Vector2(canvas.width / 2, canvas.height / 2));
 }
 
