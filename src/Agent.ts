@@ -497,6 +497,7 @@ export class Agent {
             } else if (t > tRight) {
                 vector = Vector2.multiply(lineNoDirection, tRight, __vecTemp1).add(lineNoPoint);
             } else {
+                if (t == 0) t = RVOMath.RVO_EPSILON;
                 vector = Vector2.multiply(lineNoDirection, t, __vecTemp1).add(lineNoPoint);
             }
         }

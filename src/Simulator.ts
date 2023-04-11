@@ -112,10 +112,10 @@ export class Simulator {
      */
     public setAgentParams(agentNo: int, neighborDist: number, maxNeighbors: int, timeHorizon: number, timeHorizonObst: number): void {
         const agent = this.agents_[agentNo];
-        agent.maxNeighbors_ = this.defaultAgent_.maxNeighbors_;
-        agent.neighborDist_ = this.defaultAgent_.neighborDist_;
-        agent.timeHorizon_ = this.defaultAgent_.timeHorizon_;
-        agent.timeHorizonObst_ = this.defaultAgent_.timeHorizonObst_;
+        agent.maxNeighbors_ = maxNeighbors;
+        agent.neighborDist_ = neighborDist;
+        agent.timeHorizon_ = timeHorizon;
+        agent.timeHorizonObst_ = timeHorizonObst;
     }
 
     delAgent(agentNo: int): void {
@@ -464,6 +464,9 @@ export class Simulator {
         if (this.defaultAgent_ == null)
             this.defaultAgent_ = new Agent(this);
 
+        console.assert(neighborDist >= radius * 2, neighborDist, radius, "neighborDist must greaterThanEq self.radius + neighbor.radius");
+        console.assert(timeHorizon > 0, "timeHorizon must greaterThanEq 0");
+        console.assert(timeHorizonObst > 0, "timeHorizon must greaterThanEq 0");
         this.defaultAgent_.maxNeighbors_ = maxNeighbors;
         this.defaultAgent_.maxSpeed_ = maxSpeed;
         this.defaultAgent_.neighborDist_ = neighborDist;
