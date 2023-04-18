@@ -100,12 +100,12 @@ export class KdTree {
      * Builds an agent k-D tree.
      */
     buildAgentTree() {
-        let agentsLength = this.simulator.agents_.length;
+        let agentsLength = this.simulator.agentCount;
         if (this.agents_.length != agentsLength) {
             this.agents_.length = 0;
 
             this.simulator.forEachAgent((agentNo) => {
-                this.agents_.push(this.simulator.agents_[agentNo]);
+                this.agents_.push(this.simulator.getAgent(agentNo));
             });
 
             this.agentTree_ = new Array<AgentTreeNode>(2 * this.agents_.length);
@@ -126,7 +126,7 @@ export class KdTree {
     buildObstacleTree() {
         this.obstacleTree_ = new ObstacleTreeNode();
 
-        let obstacles =  Array.from(this.simulator.obstacles_);
+        let obstacles = Array.from(this.simulator.obstacles_);
         this.obstacleTree_ = this.buildObstacleTreeRecursive(obstacles);
     }
 

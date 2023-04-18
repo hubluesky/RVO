@@ -29,11 +29,7 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
         /* Specify the global time step of the simulation. */
         rvo.setTimeStep(0.55);
 
-        /*
-         * Specify the default parameters for agents that are subsequently
-         * added.
-         */
-        rvo.setAgentDefaults(radius * 4, 10, 10, 10, radius, 5.0);
+        const speed = 5.0;
 
         /*
          * Add agents, specifying their start position, and store their
@@ -54,7 +50,7 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2) {
             }
             const offset = new Vector2(Math.random(), Math.random());
             position.multiply(distance).add(offset);
-            rvo.addAgent(position);
+            rvo.addAgent(position, radius, speed);
         }
     }
 
@@ -130,12 +126,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
         /* Specify the global time step of the simulation. */
         rvo.setTimeStep(0.55);
 
-        /*
-         * Specify the default parameters for agents that are subsequently
-         * added.
-         */
-        rvo.setAgentDefaults(radius * 4, 10, 5, 5, radius, 3.0);
-
+        const speed = 3;
         /*
          * Add agents, specifying their start position, and store their
          * goals on the opposite side of the environment.
@@ -148,23 +139,23 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2) {
 
                 const position1 = new Vector2(distance + i * scale, distance + j * scale);
                 // const goal1 = new Vector2(-goalDistance, -goalDistance);
-                const id1 = rvo.addAgent(position1);
+                const id1 = rvo.addAgent(position1, radius, speed);
                 // agentRender.push({ id: goals.length, color: null });
 
                 const position2 = new Vector2(-distance - i * scale, distance + j * scale);
                 // const goal2 = new Vector2(goalDistance, -goalDistance);
-                const id2 = rvo.addAgent(position2);
+                const id2 = rvo.addAgent(position2, radius, speed);
                 // agentRender.push({ id: goals.length, color: null });
 
                 const position3 = new Vector2(distance + i * scale, -distance - j * scale);
                 // const goal3 = new Vector2(-goalDistance, goalDistance);
-                const id3 = rvo.addAgent(position3);
+                const id3 = rvo.addAgent(position3, radius, speed);
                 // agentRender.push({ id: goals.length, color: null });
                 // goals.push(goal3);
 
                 const position4 = new Vector2(-distance - i * scale, -distance - j * scale);
                 // const goal4 = new Vector2(goalDistance, goalDistance);
-                const id4 = rvo.addAgent(position4);
+                const id4 = rvo.addAgent(position4, radius, speed);
                 // agentRender.push({ id: goals.length, color: null });
 
                 goals[id1] = position4;

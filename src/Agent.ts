@@ -35,6 +35,7 @@ export class Agent {
     timeHorizonObst_: number = 0;
     needDelete_: boolean = false;
     isFreeze: boolean = false;
+    userData: any;
 
     private newVelocity_: Vector2 = new Vector2();
 

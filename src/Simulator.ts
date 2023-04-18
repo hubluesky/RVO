@@ -40,12 +40,11 @@ type int = number;
  * Defines the simulation.
  */
 export class Simulator {
-    readonly agents_: Array<Agent> = [];
+    private readonly agents_: Array<Agent> = [];
     readonly obstacles_: Array<Obstacle> = [];
     kdTree_: KdTree;
     timeStep_: number;
 
-    private defaultAgent_: Agent;
     private globalTime_: number;
     public agentCount: number = 0;
     public obstacleCount: number = 0;
@@ -68,22 +67,41 @@ export class Simulator {
      * @param position The two-dimensional starting position of this agent.
      * @param radius The radius of this agent. Must be non-negative.
      * @param maxSpeed The maximum speed of this agent. Must be non-negative.
+     * @param timeHorizon The default minimal amount of time for
+     * which a new agent's velocities that are computed by the simulation
+     * are safe with respect to other agents. The larger this number, the
+     * sooner an agent will respond to the presence of other agents, but the
+     * less freedom the agent has in choosing its velocities. Must be
+     * positive.
+     * @param timeHorizonObst The default minimal amount of time for
+     * which a new agent's velocities that are computed by the simulation
+     * are safe with respect to obstacles. The larger this number, the
+     * sooner an agent will respond to the presence of obstacles, but the
+     * less freedom the agent has in choosing its velocities. Must be
+     * positive.
+     * @param maxNeighbors The default maximum number of other agents
+     * a new agent takes into account in the navigation. The larger this
+     * number, the longer the running time of the simulation. If the number
+     * is too low, the simulation will not be safe.
+     * @param neighborDist The default maximum distance (center point
+     * to center point) to other agents a new agent takes into account in
+     * the navigation. The larger this number, the longer he running time of
+     * the simulation. If the number is too low, the simulation will not be
+     * safe. Must be non-negative.
      * @returns The number of the agent.
      */
-    addAgent(position: Vector2, radius?: number, maxSpeed?: number): int {
-        console.assert(this.defaultAgent_ != null);
-
+    addAgent(position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 10, timeHorizonObst: number = 10, maxNeighbors: number = 10, neighborDist?: number): int {
         let agent = new Agent(this);
         agent.id_ = this.agents_.length;
         agent.position_.set(position);
-        agent.radius_ = radius ?? this.defaultAgent_.radius_;
-        agent.maxSpeed_ = maxSpeed ?? this.defaultAgent_.maxSpeed_;
-        agent.maxNeighbors_ = this.defaultAgent_.maxNeighbors_;
-        agent.neighborDist_ = this.defaultAgent_.neighborDist_;
-        agent.timeHorizon_ = this.defaultAgent_.timeHorizon_;
-        agent.timeHorizonObst_ = this.defaultAgent_.timeHorizonObst_;
-        agent.velocity_.set(this.defaultAgent_.velocity_);
+        agent.radius_ = radius;
+        agent.maxSpeed_ = maxSpeed;
+        agent.timeHorizon_ = timeHorizon;
+        agent.timeHorizonObst_ = timeHorizonObst;
+        agent.maxNeighbors_ = maxNeighbors;
+        agent.neighborDist_ = neighborDist ?? radius * 4;
         this.agents_.push(agent);
+        this.agentCount++;
         return agent.id_;
     }
 
@@ -189,7 +207,6 @@ export class Simulator {
      */
     clear(): void {
         this.agents_.length = 0;
-        this.defaultAgent_ = null;
         this.kdTree_ = new KdTree(this);
         this.obstacles_.length = 0;
         this.globalTime_ = 0;
@@ -203,21 +220,25 @@ export class Simulator {
     doStep(): number {
         this.kdTree_.buildAgentTree();
 
-        for (const agentNo in this.agents_) {
+        this.forEachAgent((agentNo) => {
             const agent = this.agents_[agentNo];
-            if (agent.isFreeze) continue;
+            if (agent.isFreeze) return;
             agent.computeNeighbors();
             agent.computeNewVelocity();
-        }
+        });
 
-        for (const agentNo in this.agents_) {
+        this.forEachAgent((agentNo) => {
             const agent = this.agents_[agentNo];
-            if (agent.isFreeze) continue;
+            if (agent.isFreeze) return;
             agent.update();
-        }
+        });
 
         this.globalTime_ += this.timeStep_;
         return this.globalTime_;
+    }
+
+    public getAgent(agentNo: number): Agent {
+        return this.agents_[agentNo];
     }
 
     /**
@@ -433,48 +454,6 @@ export class Simulator {
         if (this.agentCount == 0) return -1;
         return this.kdTree_.queryNearAgent(point, radius);
     }
-    /**
-     * Sets the default properties for any new agent that is added.
-     * @param neighborDist The default maximum distance (center point
-     * to center point) to other agents a new agent takes into account in
-     * the navigation. The larger this number, the longer he running time of
-     * the simulation. If the number is too low, the simulation will not be
-     * safe. Must be non-negative.
-     * @param maxNeighbors The default maximum number of other agents
-     * a new agent takes into account in the navigation. The larger this
-     * number, the longer the running time of the simulation. If the number
-     * is too low, the simulation will not be safe.
-     * @param timeHorizon The default minimal amount of time for
-     * which a new agent's velocities that are computed by the simulation
-     * are safe with respect to other agents. The larger this number, the
-     * sooner an agent will respond to the presence of other agents, but the
-     * less freedom the agent has in choosing its velocities. Must be
-     * positive.
-     * @param timeHorizonObst The default minimal amount of time for
-     * which a new agent's velocities that are computed by the simulation
-     * are safe with respect to obstacles. The larger this number, the
-     * sooner an agent will respond to the presence of obstacles, but the
-     * less freedom the agent has in choosing its velocities. Must be
-     * positive.
-     * @param radius The default radius of a new agent. Must be non-negative.
-     * @param maxSpeed The default maximum speed of a new agent. Must be non-negative.
-     * @param velocity The default initial two-dimensional linear velocity of a new agent.
-     */
-    setAgentDefaults(neighborDist: number, maxNeighbors: int, timeHorizon: number, timeHorizonObst: number, radius: number, maxSpeed: number, velocity: Vector2 = new Vector2(0.0, 0.0)) {
-        if (this.defaultAgent_ == null)
-            this.defaultAgent_ = new Agent(this);
-
-        console.assert(neighborDist >= radius * 2, neighborDist, radius, "neighborDist must greaterThanEq self.radius + neighbor.radius");
-        console.assert(timeHorizon > 0, "timeHorizon must greaterThanEq 0");
-        console.assert(timeHorizonObst > 0, "timeHorizon must greaterThanEq 0");
-        this.defaultAgent_.maxNeighbors_ = maxNeighbors;
-        this.defaultAgent_.maxSpeed_ = maxSpeed;
-        this.defaultAgent_.neighborDist_ = neighborDist;
-        this.defaultAgent_.radius_ = radius;
-        this.defaultAgent_.timeHorizon_ = timeHorizon;
-        this.defaultAgent_.timeHorizonObst_ = timeHorizonObst;
-        this.defaultAgent_.velocity_.set(velocity);
-    }
 
     public freezeAgent(agentNo: number): void {
         this.agents_[agentNo].isFreeze = true;
@@ -483,6 +462,14 @@ export class Simulator {
 
     public unfreezeAgent(agentNo: number): void {
         this.agents_[agentNo].isFreeze = false;
+    }
+
+    public setAgentUserData<T>(agentNo: number, userData: T): void {
+        this.agents_[agentNo].userData = userData;
+    }
+
+    public getAgentUserData<T>(agentNo: number): T {
+        return this.agents_[agentNo].userData;
     }
 
     /**
