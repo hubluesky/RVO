@@ -90,7 +90,7 @@ export class Simulator {
      * safe. Must be non-negative.
      * @returns The number of the agent.
      */
-    addAgent(position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 10, timeHorizonObst: number = 10, maxNeighbors: number = 10, neighborDist?: number): int {
+    addAgent(position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10, neighborDist?: number): int {
         let agent = new Agent(this);
         agent.id_ = this.agents_.length;
         agent.position_.set(position);

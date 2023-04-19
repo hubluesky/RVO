@@ -27,12 +27,12 @@ export class Agent {
     prefVelocity_: Vector2 = new Vector2();
     velocity_: Vector2 = new Vector2();
     id_: int = 0;
-    maxNeighbors_: int = 0;
-    maxSpeed_: number = 0;
-    neighborDist_: number = 0;
     radius_: number = 0;
+    maxSpeed_: number = 0;
     timeHorizon_: number = 0;
     timeHorizonObst_: number = 0;
+    maxNeighbors_: int = 0;
+    neighborDist_: number = 0;
     needDelete_: boolean = false;
     isFreeze: boolean = false;
     userData: any;
@@ -317,6 +317,7 @@ export class Agent {
 
                 if (dotProduct1 < 0.0 && RVOMath.sqr(dotProduct1) > combinedRadiusSq * wLengthSq) {
                     /* Project on cut-off circle. */
+                    if (wLengthSq == 0) continue;
                     let wLength = Math.sqrt(wLengthSq);
                     let unitW = w.divide(wLength);
 
@@ -346,8 +347,8 @@ export class Agent {
 
                 /* Vector from cutoff center to relative velocity. */
                 let w = Vector2.subtract(relativeVelocity, Vector2.multiply(relativePosition, invTimeStep, __vecTemp3), __vecTemp3);
-
                 let wLength = w.length();
+                if (wLength == 0) continue;
                 let unitW = w.divide(wLength);
 
                 line.direction.reset(unitW.y, -unitW.x);
@@ -372,7 +373,7 @@ export class Agent {
      */
     insertAgentNeighbor(agent: Agent, rangeSq: number): number {
         if (this != agent) {
-            let distSq = Vector2.subtract(this.position_, agent.position_, __vecTemp1).lengthSq();
+            let distSq = Vector2.distanceSq(this.position_, agent.position_);
 
             if (distSq < rangeSq) {
                 if (this.agentNeighbors_.length < this.maxNeighbors_) {
@@ -502,7 +503,6 @@ export class Agent {
                 vector = Vector2.multiply(lineNoDirection, t, __vecTemp1).add(lineNoPoint);
             }
         }
-
         return vector;
     }
 

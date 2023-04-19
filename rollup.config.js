@@ -8,7 +8,7 @@ export default [{
     input: input,
     output: {
         // sourcemap: "inline",
-        file: `./dist/${outputName}.js`,
+        file: `./dist/${outputName}.mjs`,
         format: "es",
         // name: 'rvo',
     },
@@ -26,14 +26,14 @@ export default [{
     },
     plugins: [dts()]
 }, {
-    input: "./Test.ts",
+    input: "./Example.ts",
     output: {
-        file: `./dist/Test.js`,
+        file: `./dist/Example.js`,
         format: "es",
     },
     plugins: [typescript({
         tsconfig: "tsconfig.json",
-        tsconfigOverride: { include: ["./Test.ts"] }
+        tsconfigOverride: { include: ["./Example.ts"] }
     })]
 }
 ];
