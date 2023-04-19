@@ -83,14 +83,9 @@ export class Simulator {
      * a new agent takes into account in the navigation. The larger this
      * number, the longer the running time of the simulation. If the number
      * is too low, the simulation will not be safe.
-     * @param neighborDist The default maximum distance (center point
-     * to center point) to other agents a new agent takes into account in
-     * the navigation. The larger this number, the longer he running time of
-     * the simulation. If the number is too low, the simulation will not be
-     * safe. Must be non-negative.
      * @returns The number of the agent.
      */
-    addAgent(position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10, neighborDist?: number): int {
+    addAgent(position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10): int {
         let agent = new Agent(this);
         agent.id_ = this.agents_.length;
         agent.position_.set(position);
@@ -99,41 +94,9 @@ export class Simulator {
         agent.timeHorizon_ = timeHorizon;
         agent.timeHorizonObst_ = timeHorizonObst;
         agent.maxNeighbors_ = maxNeighbors;
-        agent.neighborDist_ = neighborDist ?? radius * 4;
         this.agents_.push(agent);
         this.agentCount++;
         return agent.id_;
-    }
-
-    /**
-     * 
-     * @param agentNo The number of the agent.
-     * @param neighborDist The maximum distance (center point to
-     * center point) to other agents this agent takes into account in the
-     * navigation. The larger this number, the longer the running time of
-     * the simulation. If the number is too low, the simulation will not be
-     * safe. Must be non-negative.
-     * @param maxNeighbors The maximum number of other agents this
-     * agent takes into account in the navigation. The larger this number,
-     * the longer the running time of the simulation. If the number is too
-     * low, the simulation will not be safe.
-     * @param timeHorizon The minimal amount of time for which this
-     * agent's velocities that are computed by the simulation are safe with
-     * respect to other agents. The larger this number, the sooner this
-     * agent will respond to the presence of other agents, but the less
-     * freedom this agent has in choosing its velocities. Must be positive.
-     * @param timeHorizonObst The minimal amount of time for which
-     * this agent's velocities that are computed by the simulation are safe
-     * with respect to obstacles. The larger this number, the sooner this
-     * agent will respond to the presence of obstacles, but the less freedom
-     * this agent has in choosing its velocities. Must be positive.
-     */
-    public setAgentParams(agentNo: int, neighborDist: number, maxNeighbors: int, timeHorizon: number, timeHorizonObst: number): void {
-        const agent = this.agents_[agentNo];
-        agent.maxNeighbors_ = maxNeighbors;
-        agent.neighborDist_ = neighborDist;
-        agent.timeHorizon_ = timeHorizon;
-        agent.timeHorizonObst_ = timeHorizonObst;
     }
 
     delAgent(agentNo: int): void {
@@ -267,15 +230,6 @@ export class Simulator {
      */
     public getAgentMaxSpeed(agentNo: number): number {
         return this.agents_[agentNo].maxSpeed_;
-    }
-
-    /**
-     * Returns the maximum neighbor distance of a specified agent.
-     * @param agentNo The number of the agent whose maximum neighbor distance is to be retrieved.
-     * @returns The present maximum neighbor distance of the agent.
-     */
-    public getAgentNeighborDist(agentNo: number): number {
-        return this.agents_[agentNo].neighborDist_;
     }
 
     /**
@@ -488,15 +442,6 @@ export class Simulator {
      */
     public setAgentMaxSpeed(agentNo: number, maxSpeed: number): void {
         this.agents_[agentNo].maxSpeed_ = maxSpeed;
-    }
-
-    /**
-     * Sets the maximum neighbor distance of a specified agent.
-     * @param agentNo The number of the agent whose maximum neighbor distance is to be modified.
-     * @param neighborDist The replacement maximum neighbor distance. Must be non-negative.
-     */
-    public setAgentNeighborDist(agentNo: number, neighborDist: number): void {
-        this.agents_[agentNo].neighborDist_ = neighborDist;
     }
 
     /**

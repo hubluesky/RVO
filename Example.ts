@@ -49,6 +49,7 @@ function setPreferredVelocities(goals: readonly Vector2[]): void {
      * (speed) in the direction of the goal.
      */
     rvo.forEachAgent((agentNo) => {
+        if (goals[agentNo] == null) return;
         const position = rvo.getAgentPosition(agentNo);
         let goalVector = Vector2.subtract(goals[agentNo], position);
         rvo.setAgentPrefVelocity(agentNo, goalVector);
@@ -60,6 +61,7 @@ function reachedGoal(example: ExampleResult): boolean {
     let result = true;
     /* Check if all agents have reached their goals. */
     rvo.forEachAgent((agentNo) => {
+        if (example.goals[agentNo] == null) return;
         const position = rvo.getAgentPosition(agentNo);
         const radius = rvo.getAgentRadius(agentNo);
         const direction = Vector2.subtract(position, example.goals[agentNo], vec2Temp);
@@ -78,7 +80,7 @@ function reachedGoal(example: ExampleResult): boolean {
 }
 
 
-function circleExample(context: CanvasRenderingContext2D, center: Vector2): ExampleResult {
+function circleExample(): ExampleResult {
     const goals: Vector2[] = [];
     const radius = 5;
     const agentRender: AgentRender[] = [];
@@ -103,13 +105,13 @@ function circleExample(context: CanvasRenderingContext2D, center: Vector2): Exam
         }
         const offset = new Vector2(Math.random(), Math.random());
         position.multiply(distance).add(offset);
-        rvo.addAgent(position, radius, speed, 10, 10, 10, 10);
+        rvo.addAgent(position, radius, speed, 10, 10, 10);
     }
 
     return { goals, agentRender };
 }
 
-function blockExample(context: CanvasRenderingContext2D, center: Vector2): ExampleResult {
+function blockExample(): ExampleResult {
     const goals: Vector2[] = [];
     const radius = 5;
     const agentRender: AgentRender[] = [];
@@ -124,7 +126,7 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2): Examp
     const distance = 150;
 
     const addAgent = function (position: Vector2) {
-        return rvo.addAgent(position, radius, speed, 1, 0.1, 10, radius * 4);
+        return rvo.addAgent(position, radius, speed, 1, 0.1, 10);
     }
 
     for (let i = 0; i < 5; ++i) {
@@ -193,16 +195,40 @@ function blockExample(context: CanvasRenderingContext2D, center: Vector2): Examp
     return { goals, agentRender, obstacleRender };
 }
 
-function circleObstacleExample(context: CanvasRenderingContext2D, center: Vector2): ExampleResult {
-    return null;
+function circleObstacleExample(): ExampleResult {
+    const goals: Vector2[] = [];
+    const radius = 10;
+    const agentRender: AgentRender[] = [];
+
+    const speed = 50.0;
+    /*
+     * Add agents, specifying their start position, and store their
+     * goals on the opposite side of the environment.
+     */
+    const agentCount = 2;
+    const distance = 280;
+    for (let i = 0; i < agentCount; ++i) {
+        const position = new Vector2(Math.cos(i * 2 * Math.PI / agentCount), Math.sin(i * 2 * Math.PI / agentCount));
+        goals.push(position.clone().multiply(-distance));
+        const offset = new Vector2(Math.random(), Math.random());
+        position.multiply(distance).add(offset);
+        const agentId = rvo.addAgent(position, radius + 6 * i, speed, 0.5, 0, 10);
+        agentRender.push({ id: agentId, color: "#ffff00" });
+    }
+
+    const agentId = rvo.addAgent(new Vector2(), 100, 0, 0, 0, 0);
+    rvo.freezeAgent(agentId);
+    agentRender.push({ id: agentId, color: "#ff0000" });
+    return { goals, agentRender };
 }
 
 export function main() {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
     const context = canvas.getContext("2d");
     const center = new Vector2(canvas.width / 2, canvas.height / 2);
-    const result = blockExample(context!, center);
-    // const result = circleExample(context, center);
+    // const result = blockExample();
+    // const result = circleExample();
+    const result = circleObstacleExample();
 
     let lastTime = Date.now();
     /* Perform (and manipulate) the simulation. */

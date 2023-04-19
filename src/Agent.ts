@@ -32,8 +32,6 @@ export class Agent {
     timeHorizon_: number = 0;
     timeHorizonObst_: number = 0;
     maxNeighbors_: int = 0;
-    neighborDist_: number = 0;
-    needDelete_: boolean = false;
     isFreeze: boolean = false;
     userData: any;
 
@@ -52,7 +50,7 @@ export class Agent {
         this.agentNeighbors_.length = 0;
 
         if (this.maxNeighbors_ > 0) {
-            rangeSq = RVOMath.sqr(this.neighborDist_);
+            rangeSq = RVOMath.sqr(this.timeHorizon_ * this.maxSpeed_ + this.radius_);
             this.simulator.kdTree_.computeAgentNeighbors(this, rangeSq);
         }
     }
@@ -372,27 +370,27 @@ export class Agent {
      * @param rangeSq The squared range around this agent.
      */
     insertAgentNeighbor(agent: Agent, rangeSq: number): number {
-        if (this != agent) {
-            let distSq = Vector2.distanceSq(this.position_, agent.position_);
+        if (this == agent) return rangeSq;
 
-            if (distSq < rangeSq) {
-                if (this.agentNeighbors_.length < this.maxNeighbors_) {
-                    this.agentNeighbors_.push(new KeyValuePair(distSq, agent));
-                }
+        let distSq = Vector2.distanceSq(this.position_, agent.position_);
+        const radiusSq = RVOMath.sqr(this.radius_ + agent.radius_);
+        if (distSq - radiusSq >= rangeSq) return rangeSq;
 
-                let i = this.agentNeighbors_.length - 1;
+        if (this.agentNeighbors_.length < this.maxNeighbors_) {
+            this.agentNeighbors_.push(new KeyValuePair(distSq, agent));
+        }
 
-                while (i != 0 && distSq < this.agentNeighbors_[i - 1].key) {
-                    this.agentNeighbors_[i] = this.agentNeighbors_[i - 1];
-                    --i;
-                }
+        let i = this.agentNeighbors_.length - 1;
 
-                this.agentNeighbors_[i] = new KeyValuePair(distSq, agent);
+        while (i != 0 && distSq < this.agentNeighbors_[i - 1].key) {
+            this.agentNeighbors_[i] = this.agentNeighbors_[i - 1];
+            --i;
+        }
 
-                if (this.agentNeighbors_.length == this.maxNeighbors_) {
-                    rangeSq = this.agentNeighbors_[this.agentNeighbors_.length - 1].key;
-                }
-            }
+        this.agentNeighbors_[i] = new KeyValuePair(distSq, agent);
+
+        if (this.agentNeighbors_.length == this.maxNeighbors_) {
+            rangeSq = this.agentNeighbors_[this.agentNeighbors_.length - 1].key;
         }
         return rangeSq;
     }
