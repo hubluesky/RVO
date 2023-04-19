@@ -163,12 +163,14 @@ export class KdTree {
         return this.queryVisibilityRecursive(q1, q2, radius, this.obstacleTree_);
     }
 
-    queryNearAgent(point: Vector2, radius: number): int {
-        let result = this.queryAgentTreeRecursive4(point, Number.MAX_VALUE, -1, 0);
+    queryNearAgent(point: Vector2, radius: number, filter: (target: Agent) => boolean): int {
+        const result = { rangeSq: Number.MAX_VALUE, agentNo: -1 };
+        this.queryAgentTreeRecursive4(result, point, 0, filter);
         if (result.rangeSq < radius * radius)
             return result.agentNo;
         return -1;
     }
+
     /**
      * Recursive method for building an agent k-D tree.
      * @param begin The beginning agent k-D tree node node index.
@@ -230,6 +232,7 @@ export class KdTree {
             this.buildAgentTreeRecursive(left, end, treeNode.right_);
         }
     }
+
     /**
      * Recursive method for building an obstacle k-D tree.
      * @param obstacles A list of obstacles.
@@ -351,15 +354,17 @@ export class KdTree {
             return node;
         }
     }
-    queryAgentTreeRecursive4(position: Vector2, rangeSq: number, agentNo: int, node: int): { rangeSq: number, agentNo: int } {
-        let result = { rangeSq: rangeSq, agentNo: agentNo };
+
+    queryAgentTreeRecursive4(result: { rangeSq: number; agentNo: int; }, position: Vector2, node: int, filter: (target: Agent) => boolean): void {
         let treeNode = this.agentTree_[node];
         if (treeNode.end_ - treeNode.begin_ <= KdTree.MAX_LEAF_SIZE) {
             for (let i = treeNode.begin_; i < treeNode.end_; ++i) {
-                let distSq = Vector2.subtract(position, this.agents_[i].position_, __vecTemp1).lengthSq();
+                const target = this.agents_[i];
+                if (filter(target)) continue;
+                let distSq = Vector2.distanceSq(position, target.position_);
                 if (distSq < result.rangeSq) {
                     result.rangeSq = distSq;
-                    result.agentNo = this.agents_[i].id_;
+                    result.agentNo = target.id_;
                 }
             }
         } else {
@@ -376,23 +381,22 @@ export class KdTree {
 
             if (distSqLeft < distSqRight) {
                 if (distSqLeft < result.rangeSq) {
-                    result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.left_);
+                    this.queryAgentTreeRecursive4(result, position, treeNode.left_, filter);
 
                     if (distSqRight < result.rangeSq)
-                        result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.right_);
+                        this.queryAgentTreeRecursive4(result, position, treeNode.right_, filter);
                 }
             } else {
                 if (distSqRight < result.rangeSq) {
-                    result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.right_);
+                    this.queryAgentTreeRecursive4(result, position, treeNode.right_, filter);
 
                     if (distSqLeft < result.rangeSq)
-                        result = this.queryAgentTreeRecursive4(position, result.rangeSq, result.agentNo, treeNode.left_);
+                        this.queryAgentTreeRecursive4(result, position, treeNode.left_, filter);
                 }
             }
-
         }
-        return result;
     }
+
     /**
      * Recursive method for computing the agent neighbors of the specified agent.
      * @param agent The agent for which agent neighbors are to be computed.
@@ -437,6 +441,7 @@ export class KdTree {
         }
         return rangeSq;
     }
+
     /**
      * Recursive method for computing the obstacle neighbors of the specified agent.
      * @param agent The agent for which obstacle neighbors are to be computed.
@@ -467,6 +472,7 @@ export class KdTree {
             this.queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= 0.0 ? node.right_ : node.left_);
         }
     }
+
     /**
      * Recursive method for querying the visibility between two points within a specified radius.
      * @param q1 The first point between which visibility is to be tested.

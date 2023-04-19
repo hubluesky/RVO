@@ -404,9 +404,9 @@ export class Simulator {
         return this.kdTree_.queryVisibility(point1, point2, radius);
     }
 
-    queryNearAgent(point: Vector2, radius: number): int {
+    queryNearAgent(point: Vector2, radius: number, filter: (target: Agent) => boolean = () => false): int {
         if (this.agentCount == 0) return -1;
-        return this.kdTree_.queryNearAgent(point, radius);
+        return this.kdTree_.queryNearAgent(point, radius, filter);
     }
 
     public freezeAgent(agentNo: number): void {
