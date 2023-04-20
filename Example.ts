@@ -56,21 +56,24 @@ function setPreferredVelocities(goals: readonly Vector2[]): void {
     });
 }
 
-function reachedGoal(example: ExampleResult): boolean {
+function reachedGoal(example: ExampleResult, deltaTime: number): boolean {
     const vec2Temp = new Vector2();
     let result = true;
     /* Check if all agents have reached their goals. */
     rvo.forEachAgent((agentNo) => {
-        if (example.goals[agentNo] == null) return;
+        const goalPosition = example.goals[agentNo];
+        if (goalPosition == null) return;
         const position = rvo.getAgentPosition(agentNo);
         const radius = rvo.getAgentRadius(agentNo);
-        const direction = Vector2.subtract(position, example.goals[agentNo], vec2Temp);
-        if (direction.lengthSq() > radius * radius) {
+        const direction = Vector2.subtract(position, goalPosition, vec2Temp);
+        const moveOffset = deltaTime * rvo.getAgentMaxSpeed(agentNo);
+        if (direction.lengthSq() > moveOffset * moveOffset) {
             result = false;
         } else {
             // rvo.setAgentPrefVelocity(i, new Vector2());
             // rvo.setAgentVelocity(i, new Vector2());
             // rvo.setAgentMaxNeighbors(i, 0);
+            rvo.setAgentPosition(agentNo, goalPosition);
             rvo.freezeAgent(agentNo);
             example.agentRender[agentNo].color = "#ff0000";
             // rvo.delAgent(agentNo);
@@ -105,7 +108,7 @@ function circleExample(): ExampleResult {
         }
         const offset = new Vector2(Math.random(), Math.random());
         position.multiply(distance).add(offset);
-        rvo.addAgent(position, radius, speed, 10, 10, 10);
+        rvo.addAgent(position, radius, speed, 1, 0, 10);
     }
 
     return { goals, agentRender };
@@ -122,15 +125,16 @@ function blockExample(): ExampleResult {
      * Add agents, specifying their start position, and store their
      * goals on the opposite side of the environment.
      */
-    const scale = 30;
-    const distance = 150;
+    const scale = 25;
+    const distance = 170;
 
     const addAgent = function (position: Vector2) {
         return rvo.addAgent(position, radius, speed, 1, 0.1, 10);
     }
 
-    for (let i = 0; i < 5; ++i) {
-        for (let j = 0; j < 5; ++j) {
+    const count = 5;
+    for (let i = 0; i < count; ++i) {
+        for (let j = 0; j < count; ++j) {
             const position1 = new Vector2(distance + i * scale, distance + j * scale);
             const id1 = addAgent(position1);
 
@@ -191,7 +195,6 @@ function blockExample(): ExampleResult {
     rvo.processObstacles();
 
     // rvo.delObstacle(obstacleId3);
-    // rvo.processObstacles();
     return { goals, agentRender, obstacleRender };
 }
 
@@ -199,27 +202,37 @@ function circleObstacleExample(): ExampleResult {
     const goals: Vector2[] = [];
     const radius = 10;
     const agentRender: AgentRender[] = [];
-
-    const speed = 50.0;
+    const obstacleRender: Vector2[][] = [];
+    const speed = 250.0;
     /*
      * Add agents, specifying their start position, and store their
      * goals on the opposite side of the environment.
      */
-    const agentCount = 2;
-    const distance = 280;
+    const agentCount = 1;
+    const distance = 180;
     for (let i = 0; i < agentCount; ++i) {
         const position = new Vector2(Math.cos(i * 2 * Math.PI / agentCount), Math.sin(i * 2 * Math.PI / agentCount));
         goals.push(position.clone().multiply(-distance));
         const offset = new Vector2(Math.random(), Math.random());
         position.multiply(distance).add(offset);
-        const agentId = rvo.addAgent(position, radius + 6 * i, speed, 0.5, 0, 10);
+        const agentId = rvo.addAgent(position, radius + 6 * i, speed, 0.01, 1, 10);
         agentRender.push({ id: agentId, color: "#ffff00" });
     }
 
     const agentId = rvo.addAgent(new Vector2(), 100, 0, 0, 0, 0);
-    rvo.freezeAgent(agentId);
+    // rvo.freezeAgent(agentId);
     agentRender.push({ id: agentId, color: "#ff0000" });
-    return { goals, agentRender };
+
+    // const ow = 50, oh = 50, ox = 0, oy = 0;
+    // const obstacle1: Vector2[] = [];
+    // obstacle1.push(new Vector2(-ow + ox, -oh + oy));
+    // obstacle1.push(new Vector2(+ow + ox, -oh + oy));
+    // obstacle1.push(new Vector2(+ow + ox, +oh + oy));
+    // obstacle1.push(new Vector2(-ow + ox, +oh + oy));
+    // const obstacleId1 = rvo.addObstacle(obstacle1);
+    // obstacleRender.push(obstacle1);
+
+    return { goals, agentRender, obstacleRender };
 }
 
 export function main() {
@@ -227,22 +240,23 @@ export function main() {
     const context = canvas.getContext("2d");
     const center = new Vector2(canvas.width / 2, canvas.height / 2);
     // const result = blockExample();
-    // const result = circleExample();
-    const result = circleObstacleExample();
+    const result = circleExample();
+    // const result = circleObstacleExample();
 
+    rvo.processObstacles();
     let lastTime = Date.now();
     /* Perform (and manipulate) the simulation. */
     const step = function () {
         context.clearRect(0, 0, center.x * 2, center.y * 2);
         const curTime = Date.now();
-        const deltaTime = (curTime - lastTime) / 1000;
+        const deltaTime = Math.min(0.1, (curTime - lastTime) / 1000);
 
         lastTime = curTime;
         /* Specify the global time step of the simulation. */
         rvo.setTimeStep(deltaTime);
         setPreferredVelocities(result.goals);
         rvo.doStep();
-        if (!reachedGoal(result))
+        if (!reachedGoal(result, deltaTime))
             requestAnimationFrame(step);
         renderAgents(context, center, result.agentRender, result.obstacleRender);
     }
