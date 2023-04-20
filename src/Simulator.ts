@@ -39,13 +39,13 @@ import { Vector2 } from "./Vector2";
  */
 export class Simulator {
     private readonly agents: Array<Agent> = [];
-    readonly obstacles: Array<Obstacle> = [];
-    kdTree: KdTree;
-    timeStep: number;
+    private readonly obstacles: Array<Obstacle> = [];
+    private kdTree: KdTree;
 
-    private globalTime: number;
-    public agentCount: number = 0;
-    public obstacleCount: number = 0;
+    private _agentCount: number = 0;
+    public get agentCount(): number { return this._agentCount; }
+    private _obstacleCount: number = 0;
+    public get obstacleCount(): number { return this._obstacleCount; }
     /**
      * Constructs and initializes a simulation.
      */
@@ -92,7 +92,7 @@ export class Simulator {
         agent.timeHorizonObst = timeHorizonObst;
         agent.maxNeighbors = maxNeighbors;
         this.agents.push(agent);
-        this.agentCount++;
+        this._agentCount++;
         return agent.id;
     }
 
@@ -101,7 +101,7 @@ export class Simulator {
         if (agent == null) return;
         this.kdTree.delAgent(agent);
         delete this.agents[agentNo];
-        this.agentCount--;
+        this._agentCount--;
     }
     /**
      * Adds a new obstacle to the simulation.
@@ -142,6 +142,7 @@ export class Simulator {
             this.obstacles.push(obstacle);
         }
 
+        this._obstacleCount++;
         return obstacleNo;
     }
 
@@ -157,7 +158,7 @@ export class Simulator {
             }
         }
         if (result)
-            this.obstacleCount--;
+            this._obstacleCount--;
         return result;
     }
     /**
@@ -167,32 +168,27 @@ export class Simulator {
         this.agents.length = 0;
         this.kdTree = new KdTree(this);
         this.obstacles.length = 0;
-        this.globalTime = 0;
-        this.timeStep = 0.1;
     }
     /**
      * Performs a simulation step and updates the two-dimensional
      * position and two-dimensional velocity of each agent.
-     * @returns The global time after the simulation step.
+     * @param timeStep The time step of the simulation. Must be positive.
      */
-    doStep(): number {
+    doStep(timeStep: number): void {
         this.kdTree.buildAgentTree();
 
         this.forEachAgent((agentNo) => {
             const agent = this.agents[agentNo];
             if (agent.isFreeze) return;
-            agent.computeNeighbors();
-            agent.computeNewVelocity();
+            agent.computeNeighbors(this.kdTree);
+            agent.computeNewVelocity(timeStep);
         });
 
         this.forEachAgent((agentNo) => {
             const agent = this.agents[agentNo];
             if (agent.isFreeze) return;
-            agent.update();
+            agent.update(timeStep);
         });
-
-        this.globalTime += this.timeStep;
-        return this.globalTime;
     }
 
     public getAgent(agentNo: number): Agent {
@@ -328,14 +324,6 @@ export class Simulator {
     }
 
     /**
-     * Returns the global time of the simulation.
-     * @returns The present global time of the simulation (zero initially).
-     */
-    public getGlobalTime(): number {
-        return this.globalTime;
-    }
-
-    /**
      * Returns the count of obstacle vertices in the simulation.
      * @returns The count of obstacle vertices in the simulation.
      */
@@ -371,18 +359,11 @@ export class Simulator {
     }
 
     /**
-     * Returns the time step of the simulation.
-     * @returns The present time step of the simulation.
-     */
-    public getTimeStep(): number {
-        return this.timeStep;
-    }
-    /**
      * Processes the obstacles that have been added so that they are accounted for in the simulation.
      * Obstacles added to the simulation after this function has been called are not accounted for in the simulation.
      */
     processObstacles(): void {
-        this.kdTree.buildObstacleTree();
+        this.kdTree.buildObstacleTree(this.obstacles);
     }
 
     /**
@@ -491,21 +472,5 @@ export class Simulator {
      */
     public setAgentVelocity(agentNo: number, velocity: Vector2): void {
         this.agents[agentNo].velocity.set(velocity);
-    }
-
-    /**
-     * Sets the global time of the simulation.
-     * @param globalTime The global time of the simulation.
-     */
-    public setGlobalTime(globalTime: number): void {
-        this.globalTime = globalTime;
-    }
-
-    /**
-     * Sets the time step of the simulation.
-     * @param timeStep The time step of the simulation. Must be positive.
-     */
-    public setTimeStep(timeStep: number): void {
-        this.timeStep = timeStep;
     }
 }

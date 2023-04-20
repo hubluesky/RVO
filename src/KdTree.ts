@@ -122,11 +122,10 @@ export class KdTree {
     /**
      * Builds an obstacle k-D tree.
      */
-    buildObstacleTree() {
+    buildObstacleTree(obstacles: Obstacle[]) {
         this.obstacleTree = new ObstacleTreeNode();
 
-        let obstacles = Array.from(this.simulator.obstacles);
-        this.obstacleTree = this.buildObstacleTreeRecursive(obstacles);
+        this.obstacleTree = this.buildObstacleTreeRecursive(Array.from(obstacles), obstacles);
     }
 
     public delAgent(agent: Agent): void {
@@ -237,7 +236,7 @@ export class KdTree {
      * @param obstacles A list of obstacles.
      * @returns An obstacle k-D tree node.
      */
-    buildObstacleTreeRecursive(obstacles: readonly Obstacle[]): ObstacleTreeNode {
+    buildObstacleTreeRecursive(obstacles: readonly Obstacle[], sourceObstacles: Obstacle[]): ObstacleTreeNode {
         if (obstacles.length == 0)
             return null;
 
@@ -328,7 +327,7 @@ export class KdTree {
                     newObstacle.convex = true;
                     newObstacle.direction = obstacleJ1.direction;
 
-                    this.simulator.obstacles.push(newObstacle);
+                    sourceObstacles.push(newObstacle);
 
                     obstacleJ1.next = newObstacle;
                     obstacleJ2.previous = newObstacle;
@@ -344,8 +343,8 @@ export class KdTree {
             }
 
             node.obstacle = obstacleI1;
-            node.left = this.buildObstacleTreeRecursive(leftObstacles);
-            node.right = this.buildObstacleTreeRecursive(rightObstacles);
+            node.left = this.buildObstacleTreeRecursive(leftObstacles, sourceObstacles);
+            node.right = this.buildObstacleTreeRecursive(rightObstacles, sourceObstacles);
 
             return node;
         }

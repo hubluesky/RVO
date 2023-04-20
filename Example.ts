@@ -252,10 +252,8 @@ export function main() {
         const deltaTime = Math.min(0.1, (curTime - lastTime) / 1000);
 
         lastTime = curTime;
-        /* Specify the global time step of the simulation. */
-        rvo.setTimeStep(deltaTime);
         setPreferredVelocities(result.goals);
-        rvo.doStep();
+        rvo.doStep(deltaTime);
         if (!reachedGoal(result, deltaTime))
             requestAnimationFrame(step);
         renderAgents(context, center, result.agentRender, result.obstacleRender);

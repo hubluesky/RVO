@@ -1,3 +1,4 @@
+import { KdTree } from "./KdTree";
 import { Line } from "./Line";
 import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
@@ -40,23 +41,23 @@ export class Agent {
     /**
      * Computes the neighbors of this agent.
      */
-    computeNeighbors(): void {
+    computeNeighbors(kdTree: KdTree): void {
         this.obstacleNeighbors.length = 0;
         let rangeSq = RVOMath.sqr(this.timeHorizonObst * this.maxSpeed + this.radius);
-        this.simulator.kdTree.computeObstacleNeighbors(this, rangeSq);
+        kdTree.computeObstacleNeighbors(this, rangeSq);
 
         this.agentNeighbors.length = 0;
 
         if (this.maxNeighbors > 0) {
             rangeSq = RVOMath.sqr(this.timeHorizon * this.maxSpeed + this.radius);
-            this.simulator.kdTree.computeAgentNeighbors(this, rangeSq);
+            kdTree.computeAgentNeighbors(this, rangeSq);
         }
     }
 
     /**
      * Computes the new velocity of this agent.
      */
-    computeNewVelocity(): void {
+    computeNewVelocity(timeStep: number): void {
         this.orcaLines.length = 0;
 
         let invTimeHorizonObst = 1.0 / this.timeHorizonObst;
@@ -339,7 +340,7 @@ export class Agent {
                 }
             } else {
                 /* Collision. Project on cut-off circle of time timeStep. */
-                let invTimeStep = 1.0 / this.simulator.timeStep;
+                let invTimeStep = 1.0 / timeStep;
 
                 /* Vector from cutoff center to relative velocity. */
                 let w = Vector2.subtract(relativeVelocity, Vector2.multiply(relativePosition, invTimeStep, __vecTemp3), __vecTemp3);
@@ -419,10 +420,11 @@ export class Agent {
 
     /**
      * Updates the two-dimensional position and two-dimensional velocity of this agent.
+     * @param timeStep The time step of the simulation. Must be positive.
      */
-    update() {
+    update(timeStep: number) {
         this.velocity.set(this.newVelocity);
-        this.position.add(Vector2.multiply(this.velocity, this.simulator.timeStep, __vecTemp1));
+        this.position.add(Vector2.multiply(this.velocity, timeStep, __vecTemp1));
         this.prefVelocity.reset();
     }
 
