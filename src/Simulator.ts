@@ -1,5 +1,5 @@
 import { Agent } from "./Agent";
-import { KdTree } from "./KdTree";
+import { AgentKdTree, ObstacleKdTree } from "./KdTree";
 import { Line } from "./Line";
 import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
@@ -40,17 +40,39 @@ import { Vector2 } from "./Vector2";
 export class Simulator {
     private readonly agents: Array<Agent> = [];
     private readonly obstacles: Array<Obstacle> = [];
-    private kdTree: KdTree;
+    private obstrcleTree: ObstacleKdTree;
+    private agentTree: AgentKdTree;
 
     private _agentCount: number = 0;
     public get agentCount(): number { return this._agentCount; }
     private _obstacleCount: number = 0;
     public get obstacleCount(): number { return this._obstacleCount; }
+
+    public readonly layerMasks: number[] = [];
+
     /**
      * Constructs and initializes a simulation.
      */
     public constructor() {
         this.clear();
+    }
+
+    /**
+     * 角色碰撞层矩阵，角色的碰撞层（即Layer）不能为0
+     * @param matrix 碰撞层矩阵
+     */
+    public initLayerMatrix(matrix: readonly number[][]): void {
+        this.layerMasks.length = matrix.length;
+        for (let i = 0; i < matrix.length; i++) {
+            let mask = 0;
+            for (let j = 0; j < matrix[i].length; j++)
+                mask |= 1 << matrix[i][j];
+            this.layerMasks[i] = mask;
+        }
+    }
+
+    public checkLayerMask(layer: number, otherLayer: number): boolean {
+        return (this.layerMasks[layer] & (1 << otherLayer)) != 0;
     }
 
     public forEachAgent(callback: (agentNo: number) => void) {
@@ -62,6 +84,7 @@ export class Simulator {
 
     /**
      * Adds a new agent to the simulation.
+     * @param layer collision layer of the agent
      * @param position The two-dimensional starting position of this agent.
      * @param radius The radius of this agent. Must be non-negative.
      * @param maxSpeed The maximum speed of this agent. Must be non-negative.
@@ -83,8 +106,9 @@ export class Simulator {
      * is too low, the simulation will not be safe.
      * @returns The number of the agent.
      */
-    addAgent(position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10): number {
-        let agent = new Agent(this, this.agents.length);
+    addAgent(layer: number, position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10): number {
+        console.assert(this.layerMasks[layer] != null, "layer " + layer + " is not defined");
+        let agent = new Agent(this, this.agents.length, layer);
         agent.position.set(position);
         agent.radius = radius;
         agent.maxSpeed = maxSpeed;
@@ -99,7 +123,7 @@ export class Simulator {
     delAgent(agentNo: number): void {
         const agent = this.agents[agentNo];
         if (agent == null) return;
-        this.kdTree.delAgent(agent);
+        this.agentTree.delAgent(agent);
         delete this.agents[agentNo];
         this._agentCount--;
     }
@@ -107,10 +131,12 @@ export class Simulator {
      * Adds a new obstacle to the simulation.
      * To add a "negative" obstacle, e.g. a bounding polygon around
      * the environment, the vertices should be listed in clockwise order.
+     * @param layer collision layer of the obstacle
      * @param vertices List of the vertices of the polygonal obstacle in counterclockwise order.
      * @returns The number of the first vertex of the obstacle, or -1 when the number of vertices is less than two.
      */
-    addObstacle(vertices: readonly Vector2[]): number {
+    addObstacle(layer: number, vertices: readonly Vector2[]): number {
+        console.assert(this.layerMasks[layer] != null, "layer " + layer + " is not defined");
         console.assert(vertices.length >= 2);
         if (vertices.length < 2)
             return -1;
@@ -118,7 +144,7 @@ export class Simulator {
         let obstacleNo = this.obstacles.length;
 
         for (let i = 0; i < vertices.length; ++i) {
-            let obstacle = new Obstacle(obstacleNo);
+            let obstacle = new Obstacle(obstacleNo, layer);
             obstacle.point = vertices[i];
 
             if (i > 0) {
@@ -166,7 +192,8 @@ export class Simulator {
      */
     clear(): void {
         this.agents.length = 0;
-        this.kdTree = new KdTree(this);
+        this.agentTree = new AgentKdTree(this);
+        this.obstrcleTree = new ObstacleKdTree();
         this.obstacles.length = 0;
     }
     /**
@@ -175,12 +202,12 @@ export class Simulator {
      * @param timeStep The time step of the simulation. Must be positive.
      */
     doStep(timeStep: number): void {
-        this.kdTree.buildAgentTree();
+        this.agentTree.buildAgentTree();
 
         this.forEachAgent((agentNo) => {
             const agent = this.agents[agentNo];
             if (agent.isFreeze) return;
-            agent.computeNeighbors(this.kdTree);
+            agent.computeNeighbors(this.agentTree, this.obstrcleTree);
             agent.computeNewVelocity(timeStep);
         });
 
@@ -195,15 +222,15 @@ export class Simulator {
         return this.agents[agentNo];
     }
 
-    /**
-     * Returns the specified agent neighbor of the specified agent.
-     * @param agentNo The number of the agent whose agent neighbor is to be retrieved.
-     * @param neighborNo The number of the agent neighbor to be retrieved.
-     * @returns The number of the neighboring agent.
-     */
-    public getAgentAgentNeighbor(agentNo: number, neighborNo: number): number {
-        return this.agents[agentNo].agentNeighbors[neighborNo].value.id;
-    }
+    // /**
+    //  * Returns the specified agent neighbor of the specified agent.
+    //  * @param agentNo The number of the agent whose agent neighbor is to be retrieved.
+    //  * @param neighborNo The number of the agent neighbor to be retrieved.
+    //  * @returns The number of the neighboring agent.
+    //  */
+    // public getAgentAgentNeighbor(agentNo: number, neighborNo: number): number {
+    //     return this.agents[agentNo].agentNeighbors[neighborNo].value.id;
+    // }
 
     /**
      * Returns the maximum neighbor count of a specified agent.
@@ -223,51 +250,51 @@ export class Simulator {
         return this.agents[agentNo].maxSpeed;
     }
 
-    /**
-     * Returns the count of agent neighbors taken into account to
-     * compute the current velocity for the specified agent.
-     * @param agentNo The number of the agent whose count of agent neighbors is to be retrieved.
-     * @returns The count of agent neighbors taken into account to compute
-     * the current velocity for the specified agent.
-     */
-    public getAgentNumAgentNeighbors(agentNo: number): number {
-        return this.agents[agentNo].agentNeighbors.length;
-    }
+    // /**
+    //  * Returns the count of agent neighbors taken into account to
+    //  * compute the current velocity for the specified agent.
+    //  * @param agentNo The number of the agent whose count of agent neighbors is to be retrieved.
+    //  * @returns The count of agent neighbors taken into account to compute
+    //  * the current velocity for the specified agent.
+    //  */
+    // public getAgentNumAgentNeighbors(agentNo: number): number {
+    //     return this.agents[agentNo].agentNeighbors.length;
+    // }
 
-    /**
-     * Returns the count of obstacle neighbors taken into account
-     * to compute the current velocity for the specified agent.
-     * @param agentNo The number of the agent whose count of obstacle neighbors is to be retrieved.
-     * @returns The count of obstacle neighbors taken into account to
-     * compute the current velocity for the specified agent.
-     */
-    public getAgentNumObstacleNeighbors(agentNo: number): number {
-        return this.agents[agentNo].obstacleNeighbors.length;
-    }
+    // /**
+    //  * Returns the count of obstacle neighbors taken into account
+    //  * to compute the current velocity for the specified agent.
+    //  * @param agentNo The number of the agent whose count of obstacle neighbors is to be retrieved.
+    //  * @returns The count of obstacle neighbors taken into account to
+    //  * compute the current velocity for the specified agent.
+    //  */
+    // public getAgentNumObstacleNeighbors(agentNo: number): number {
+    //     return this.agents[agentNo].obstacleNeighbors.length;
+    // }
 
-    /**
-     * Returns the specified obstacle neighbor of the specified
-     * agent.
-     * @param agentNo The number of the agent whose obstacle neighbor is to be retrieved.
-     * @param neighborNo The number of the obstacle neighbor to be retrieved.
-     * @returns The number of the first vertex of the neighboring obstacle
-     * edge.
-     */
-    public getAgentObstacleNeighbor(agentNo: number, neighborNo: number): number {
-        return this.agents[agentNo].obstacleNeighbors[neighborNo].value.id;
-    }
+    // /**
+    //  * Returns the specified obstacle neighbor of the specified
+    //  * agent.
+    //  * @param agentNo The number of the agent whose obstacle neighbor is to be retrieved.
+    //  * @param neighborNo The number of the obstacle neighbor to be retrieved.
+    //  * @returns The number of the first vertex of the neighboring obstacle
+    //  * edge.
+    //  */
+    // public getAgentObstacleNeighbor(agentNo: number, neighborNo: number): number {
+    //     return this.agents[agentNo].obstacleNeighbors[neighborNo].value.id;
+    // }
 
-    /**
-     * Returns the ORCA constraints of the specified agent.
-     * The halfplane to the left of each line is the region of
-     * permissible velocities with respect to that ORCA constraint.
-     * @param agentNo The number of the agent whose ORCA constraints
-     * are to be retrieved.
-     * @returns A list of lines representing the ORCA constraints.
-     */
-    public getAgentOrcaLines(agentNo: number): readonly Line[] {
-        return this.agents[agentNo].orcaLines;
-    }
+    // /**
+    //  * Returns the ORCA constraints of the specified agent.
+    //  * The halfplane to the left of each line is the region of
+    //  * permissible velocities with respect to that ORCA constraint.
+    //  * @param agentNo The number of the agent whose ORCA constraints
+    //  * are to be retrieved.
+    //  * @returns A list of lines representing the ORCA constraints.
+    //  */
+    // public getAgentOrcaLines(agentNo: number): readonly Line[] {
+    //     return this.agents[agentNo].orcaLines;
+    // }
 
     /**
      * Returns the two-dimensional position of a specified agent.
@@ -363,7 +390,7 @@ export class Simulator {
      * Obstacles added to the simulation after this function has been called are not accounted for in the simulation.
      */
     processObstacles(): void {
-        this.kdTree.buildObstacleTree(this.obstacles);
+        this.obstrcleTree.buildObstacleTree(this.obstacles);
     }
 
     /**
@@ -377,12 +404,12 @@ export class Simulator {
      * visible. Returns true when the obstacles have not been processed.
      */
     queryVisibility(point1: Vector2, point2: Vector2, radius: number): boolean {
-        return this.kdTree.queryVisibility(point1, point2, radius);
+        return this.obstrcleTree.queryVisibility(point1, point2, radius);
     }
 
     queryNearAgent(point: Vector2, radius: number, filter: (target: Agent) => boolean = () => false): number {
         if (this.agentCount == 0) return -1;
-        return this.kdTree.queryNearAgent(point, radius, filter);
+        return this.agentTree.queryNearAgent(point, radius, filter);
     }
 
     public freezeAgent(agentNo: number): void {

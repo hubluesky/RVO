@@ -1,4 +1,4 @@
-import { KdTree } from "./KdTree";
+import { AgentKdTree, ObstacleKdTree } from "./KdTree";
 import { Line } from "./Line";
 import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
@@ -20,12 +20,12 @@ class KeyValuePair<TKey, TValue> {
  * Defines an agent in the simulation.
  */
 export class Agent {
-    readonly agentNeighbors = new Array<KeyValuePair<number, Agent>>();
-    readonly obstacleNeighbors = new Array<KeyValuePair<number, Obstacle>>();
-    readonly orcaLines = new Array<Line>();
-    position: Vector2 = new Vector2();
-    prefVelocity: Vector2 = new Vector2();
-    velocity: Vector2 = new Vector2();
+    private readonly agentNeighbors = new Array<KeyValuePair<number, Agent>>();
+    private readonly obstacleNeighbors = new Array<KeyValuePair<number, Obstacle>>();
+    private readonly orcaLines = new Array<Line>();
+    readonly position: Vector2 = new Vector2();
+    readonly prefVelocity: Vector2 = new Vector2();
+    readonly velocity: Vector2 = new Vector2();
     radius: number = 0;
     maxSpeed: number = 0;
     timeHorizon: number = 0;
@@ -36,15 +36,15 @@ export class Agent {
 
     private newVelocity: Vector2 = new Vector2();
 
-    public constructor(public readonly simulator: Simulator, public readonly id: number) { }
+    public constructor(public readonly simulator: Simulator, public readonly id: number, public layer: number) { }
 
     /**
      * Computes the neighbors of this agent.
      */
-    computeNeighbors(kdTree: KdTree): void {
+    computeNeighbors(kdTree: AgentKdTree, obstrcleTree: ObstacleKdTree): void {
         this.obstacleNeighbors.length = 0;
         let rangeSq = RVOMath.sqr(this.timeHorizonObst * this.maxSpeed + this.radius);
-        kdTree.computeObstacleNeighbors(this, rangeSq);
+        obstrcleTree.computeObstacleNeighbors(this, rangeSq);
 
         this.agentNeighbors.length = 0;
 
@@ -370,6 +370,7 @@ export class Agent {
      */
     insertAgentNeighbor(agent: Agent, rangeSq: number): number {
         if (this == agent) return rangeSq;
+        if (!this.simulator.checkLayerMask(this.layer, agent.layer)) return rangeSq;
 
         let distSq = Vector2.distanceSq(this.position, agent.position);
         const radiusSq = RVOMath.sqr(this.radius + agent.radius);
@@ -400,6 +401,8 @@ export class Agent {
      * @param rangeSq The squared range around this agent.
      */
     insertObstacleNeighbor(obstacle: Obstacle, rangeSq: number): number {
+        if (!this.simulator.checkLayerMask(this.layer, obstacle.layer)) return rangeSq;
+
         let nextObstacle = obstacle.next;
 
         let distSq = RVOMath.distSqPointLineSegment(obstacle.point, nextObstacle.point, this.position);

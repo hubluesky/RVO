@@ -82,153 +82,15 @@ class ObstacleTreeNode {
     right: ObstacleTreeNode;
 };
 
-/**
- * Defines k-D trees for agents and static obstacles in the simulation.
- */
-export class KdTree {
-    /**
-     * The maximum size of an agent k-D tree leaf.
-     */
-    private static readonly MAX_LEAF_SIZE = 10;
-    private readonly agents: Agent[] = [];
-    private agentTree: AgentTreeNode[];
+export class ObstacleKdTree {
     private obstacleTree: ObstacleTreeNode;
-
-    public constructor(public readonly simulator: Simulator) { }
-    /**
-     * Builds an agent k-D tree.
-     */
-    buildAgentTree() {
-        let agentsLength = this.simulator.agentCount;
-        if (this.agents.length != agentsLength) {
-            this.agents.length = 0;
-
-            this.simulator.forEachAgent((agentNo) => {
-                this.agents.push(this.simulator.getAgent(agentNo));
-            });
-
-            this.agentTree = new Array<AgentTreeNode>(2 * this.agents.length);
-
-            for (let i = 0; i < this.agentTree.length; ++i) {
-                this.agentTree[i] = new AgentTreeNode();
-            }
-        }
-
-        if (this.agents.length > 0) {
-            this.buildAgentTreeRecursive(0, this.agents.length, 0);
-        }
-    }
 
     /**
      * Builds an obstacle k-D tree.
      */
     buildObstacleTree(obstacles: Obstacle[]) {
-        this.obstacleTree = new ObstacleTreeNode();
-
+        // this.obstacleTree = new ObstacleTreeNode();
         this.obstacleTree = this.buildObstacleTreeRecursive(Array.from(obstacles), obstacles);
-    }
-
-    public delAgent(agent: Agent): void {
-        const index = this.agents.indexOf(agent);
-        if (index == -1) return;
-        this.agents.splice(index, 1);
-        this.agentTree.length = this.agents.length * 2;
-    }
-    /**
-     * Computes the agent neighbors of the specified agent.
-     * @param agent The agent for which agent neighbors are to be computed.
-     * @param rangeSq The squared range around the agent.
-     */
-    computeAgentNeighbors(agent: Agent, rangeSq: number): number {
-        return this.queryAgentTreeRecursive3(agent, rangeSq, 0);
-    }
-    /**
-     * Computes the obstacle neighbors of the specified agent.
-     * @param agent The agent for which obstacle neighbors are to be computed.
-     * @param rangeSq The squared range around the agent.
-     */
-    computeObstacleNeighbors(agent: Agent, rangeSq: number): void {
-        this.queryObstacleTreeRecursive(agent, rangeSq, this.obstacleTree);
-    }
-    /**
-     * Queries the visibility between two points within a specified radius.
-     * @param q1 The first point between which visibility is to be tested.
-     * @param q2 The second point between which visibility is to be tested.
-     * @param radius The radius within which visibility is to be tested.
-     * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
-     */
-    queryVisibility(q1: Vector2, q2: Vector2, radius: number): boolean {
-        return this.queryVisibilityRecursive(q1, q2, radius, this.obstacleTree);
-    }
-
-    queryNearAgent(point: Vector2, radius: number, filter: (target: Agent) => boolean): number {
-        const result = { rangeSq: Number.MAX_VALUE, agentNo: -1 };
-        this.queryAgentTreeRecursive4(result, point, 0, filter);
-        if (result.rangeSq < radius * radius)
-            return result.agentNo;
-        return -1;
-    }
-
-    /**
-     * Recursive method for building an agent k-D tree.
-     * @param begin The beginning agent k-D tree node node index.
-     * @param end The ending agent k-D tree node index.
-     * @param node The current agent k-D tree node index.
-     */
-    buildAgentTreeRecursive(begin: number, end: number, node: number): void {
-        let treeNode = this.agentTree[node];
-        treeNode.begin = begin;
-        treeNode.end = end;
-        treeNode.minX = treeNode.maxX = this.agents[begin].position.x;
-        treeNode.minY = treeNode.maxY = this.agents[begin].position.y;
-
-        for (let i = begin + 1; i < end; ++i) {
-            treeNode.maxX = Math.max(treeNode.maxX, this.agents[i].position.x);
-            treeNode.minX = Math.min(treeNode.minX, this.agents[i].position.x);
-            treeNode.maxY = Math.max(treeNode.maxY, this.agents[i].position.y);
-            treeNode.minY = Math.min(treeNode.minY, this.agents[i].position.y);
-        }
-
-        if (end - begin > KdTree.MAX_LEAF_SIZE) {
-            /* No leaf node. */
-            let isVertical: boolean = treeNode.maxX - treeNode.minX > treeNode.maxY - treeNode.minY;
-            let splitValue: number = 0.5 * (isVertical ? treeNode.maxX + treeNode.minX : treeNode.maxY + treeNode.minY);
-
-            let left: number = begin;
-            let right: number = end;
-
-            while (left < right) {
-                while (left < right && (isVertical ? this.agents[left].position.x : this.agents[left].position.y) < splitValue) {
-                    ++left;
-                }
-
-                while (right > left && (isVertical ? this.agents[right - 1].position.x : this.agents[right - 1].position.y) >= splitValue) {
-                    --right;
-                }
-
-                if (left < right) {
-                    let tempAgent = this.agents[left];
-                    this.agents[left] = this.agents[right - 1];
-                    this.agents[right - 1] = tempAgent;
-                    ++left;
-                    --right;
-                }
-            }
-
-            let leftSize: number = left - begin;
-
-            if (leftSize == 0) {
-                ++leftSize;
-                ++left;
-                ++right;
-            }
-
-            treeNode.left = node + 1;
-            treeNode.right = node + 2 * leftSize;
-
-            this.buildAgentTreeRecursive(begin, left, treeNode.left);
-            this.buildAgentTreeRecursive(left, end, treeNode.right);
-        }
     }
 
     /**
@@ -320,7 +182,7 @@ export class KdTree {
 
                     let splitPoint: Vector2 = Vector2.subtract(obstacleJ2.point, obstacleJ1.point, __vecTemp1).multiply(t).add(obstacleJ1.point);
 
-                    let newObstacle = new Obstacle(obstacleJ1.id);
+                    let newObstacle = new Obstacle(obstacleJ1.id, obstacleJ1.layer);
                     newObstacle.point = splitPoint;
                     newObstacle.previous = obstacleJ1;
                     newObstacle.next = obstacleJ2;
@@ -350,92 +212,25 @@ export class KdTree {
         }
     }
 
-    queryAgentTreeRecursive4(result: { rangeSq: number; agentNo: number; }, position: Vector2, node: number, filter: (target: Agent) => boolean): void {
-        let treeNode = this.agentTree[node];
-        if (treeNode.end - treeNode.begin <= KdTree.MAX_LEAF_SIZE) {
-            for (let i = treeNode.begin; i < treeNode.end; ++i) {
-                const target = this.agents[i];
-                if (filter(target)) continue;
-                let distSq = Vector2.distanceSq(position, target.position);
-                if (distSq < result.rangeSq) {
-                    result.rangeSq = distSq;
-                    result.agentNo = target.id;
-                }
-            }
-        } else {
-            let treeNodeLeft = this.agentTree[treeNode.left];
-            let treeNodeRight = this.agentTree[treeNode.right];
-            let distSqLeft: number = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - position.x))
-                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeLeft.maxX))
-                + RVOMath.sqr(Math.max(0.0, treeNodeLeft.minY - position.y))
-                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeLeft.maxY));
-            let distSqRight: number = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - position.x))
-                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeRight.maxX))
-                + RVOMath.sqr(Math.max(0.0, treeNodeRight.minY - position.y))
-                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeRight.maxY));
-
-            if (distSqLeft < distSqRight) {
-                if (distSqLeft < result.rangeSq) {
-                    this.queryAgentTreeRecursive4(result, position, treeNode.left, filter);
-
-                    if (distSqRight < result.rangeSq)
-                        this.queryAgentTreeRecursive4(result, position, treeNode.right, filter);
-                }
-            } else {
-                if (distSqRight < result.rangeSq) {
-                    this.queryAgentTreeRecursive4(result, position, treeNode.right, filter);
-
-                    if (distSqLeft < result.rangeSq)
-                        this.queryAgentTreeRecursive4(result, position, treeNode.left, filter);
-                }
-            }
-        }
-    }
-
     /**
-     * Recursive method for computing the agent neighbors of the specified agent.
-     * @param agent The agent for which agent neighbors are to be computed.
+     * Computes the obstacle neighbors of the specified agent.
+     * @param agent The agent for which obstacle neighbors are to be computed.
      * @param rangeSq The squared range around the agent.
-     * @param node The current agent k-D tree node index.
      */
-    queryAgentTreeRecursive3(agent: Agent, rangeSq: number, node: number): number {
-        let treeNode = this.agentTree[node];
-        if (treeNode.end - treeNode.begin <= KdTree.MAX_LEAF_SIZE) {
-            for (let i = treeNode.begin; i < treeNode.end; ++i) {
-                rangeSq = agent.insertAgentNeighbor(this.agents[i], rangeSq);
-            }
-        } else {
-            let treeNodeLeft = this.agentTree[treeNode.left];
-            let treeNodeRight = this.agentTree[treeNode.right];
-            let distSqLeft = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - agent.position.x))
-                + RVOMath.sqr(Math.max(0.0, agent.position.x - treeNodeLeft.maxX))
-                + RVOMath.sqr(Math.max(0.0, treeNodeLeft.minY - agent.position.y))
-                + RVOMath.sqr(Math.max(0.0, agent.position.y - treeNodeLeft.maxY));
-            let distSqRight = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - agent.position.x))
-                + RVOMath.sqr(Math.max(0.0, agent.position.x - treeNodeRight.maxX))
-                + RVOMath.sqr(Math.max(0.0, treeNodeRight.minY - agent.position.y))
-                + RVOMath.sqr(Math.max(0.0, agent.position.y - treeNodeRight.maxY));
-
-            if (distSqLeft < distSqRight) {
-                if (distSqLeft < rangeSq) {
-                    rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.left);
-
-                    if (distSqRight < rangeSq) {
-                        rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.right);
-                    }
-                }
-            } else {
-                if (distSqRight < rangeSq) {
-                    rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.right);
-
-                    if (distSqLeft < rangeSq)
-                        rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.left);
-                }
-            }
-
-        }
-        return rangeSq;
+    computeObstacleNeighbors(agent: Agent, rangeSq: number): void {
+        this.queryObstacleTreeRecursive(agent, rangeSq, this.obstacleTree);
     }
+    /**
+     * Queries the visibility between two points within a specified radius.
+     * @param q1 The first point between which visibility is to be tested.
+     * @param q2 The second point between which visibility is to be tested.
+     * @param radius The radius within which visibility is to be tested.
+     * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
+     */
+    queryVisibility(q1: Vector2, q2: Vector2, radius: number): boolean {
+        return this.queryVisibilityRecursive(q1, q2, radius, this.obstacleTree);
+    }
+
 
     /**
      * Recursive method for computing the obstacle neighbors of the specified agent.
@@ -508,5 +303,214 @@ export class KdTree {
         return point1LeftOfQ * point2LeftOfQ >= 0.0 && RVOMath.sqr(point1LeftOfQ) * invLengthQ > RVOMath.sqr(radius)
             && RVOMath.sqr(point2LeftOfQ) * invLengthQ > RVOMath.sqr(radius)
             && this.queryVisibilityRecursive(q1, q2, radius, node.left) && this.queryVisibilityRecursive(q1, q2, radius, node.right);
+    }
+}
+
+/**
+ * Defines k-D trees for agents and static obstacles in the simulation.
+ */
+export class AgentKdTree {
+    /**
+     * The maximum size of an agent k-D tree leaf.
+     */
+    private static readonly MAX_LEAF_SIZE = 10;
+    private readonly agents: Agent[] = [];
+    private agentTree: AgentTreeNode[];
+
+    public constructor(public readonly simulator: Simulator) { }
+    /**
+     * Builds an agent k-D tree.
+     */
+    buildAgentTree() {
+        let agentsLength = this.simulator.agentCount;
+        if (this.agents.length != agentsLength) {
+            this.agents.length = 0;
+
+            this.simulator.forEachAgent((agentNo) => {
+                this.agents.push(this.simulator.getAgent(agentNo));
+            });
+
+            this.agentTree = new Array<AgentTreeNode>(2 * this.agents.length);
+
+            for (let i = 0; i < this.agentTree.length; ++i) {
+                this.agentTree[i] = new AgentTreeNode();
+            }
+        }
+
+        if (this.agents.length > 0) {
+            this.buildAgentTreeRecursive(0, this.agents.length, 0);
+        }
+    }
+
+    public delAgent(agent: Agent): void {
+        const index = this.agents.indexOf(agent);
+        if (index == -1) return;
+        this.agents.splice(index, 1);
+        this.agentTree.length = this.agents.length * 2;
+    }
+    /**
+     * Computes the agent neighbors of the specified agent.
+     * @param agent The agent for which agent neighbors are to be computed.
+     * @param rangeSq The squared range around the agent.
+     */
+    computeAgentNeighbors(agent: Agent, rangeSq: number): number {
+        return this.queryAgentTreeRecursive3(agent, rangeSq, 0);
+    }
+
+    queryNearAgent(point: Vector2, radius: number, filter: (target: Agent) => boolean): number {
+        const result = { rangeSq: Number.MAX_VALUE, agentNo: -1 };
+        this.queryAgentTreeRecursive4(result, point, 0, filter);
+        if (result.rangeSq < radius * radius)
+            return result.agentNo;
+        return -1;
+    }
+
+    /**
+     * Recursive method for building an agent k-D tree.
+     * @param begin The beginning agent k-D tree node node index.
+     * @param end The ending agent k-D tree node index.
+     * @param node The current agent k-D tree node index.
+     */
+    buildAgentTreeRecursive(begin: number, end: number, node: number): void {
+        let treeNode = this.agentTree[node];
+        treeNode.begin = begin;
+        treeNode.end = end;
+        treeNode.minX = treeNode.maxX = this.agents[begin].position.x;
+        treeNode.minY = treeNode.maxY = this.agents[begin].position.y;
+
+        for (let i = begin + 1; i < end; ++i) {
+            treeNode.maxX = Math.max(treeNode.maxX, this.agents[i].position.x);
+            treeNode.minX = Math.min(treeNode.minX, this.agents[i].position.x);
+            treeNode.maxY = Math.max(treeNode.maxY, this.agents[i].position.y);
+            treeNode.minY = Math.min(treeNode.minY, this.agents[i].position.y);
+        }
+
+        if (end - begin > AgentKdTree.MAX_LEAF_SIZE) {
+            /* No leaf node. */
+            let isVertical: boolean = treeNode.maxX - treeNode.minX > treeNode.maxY - treeNode.minY;
+            let splitValue: number = 0.5 * (isVertical ? treeNode.maxX + treeNode.minX : treeNode.maxY + treeNode.minY);
+
+            let left: number = begin;
+            let right: number = end;
+
+            while (left < right) {
+                while (left < right && (isVertical ? this.agents[left].position.x : this.agents[left].position.y) < splitValue) {
+                    ++left;
+                }
+
+                while (right > left && (isVertical ? this.agents[right - 1].position.x : this.agents[right - 1].position.y) >= splitValue) {
+                    --right;
+                }
+
+                if (left < right) {
+                    let tempAgent = this.agents[left];
+                    this.agents[left] = this.agents[right - 1];
+                    this.agents[right - 1] = tempAgent;
+                    ++left;
+                    --right;
+                }
+            }
+
+            let leftSize: number = left - begin;
+
+            if (leftSize == 0) {
+                ++leftSize;
+                ++left;
+                ++right;
+            }
+
+            treeNode.left = node + 1;
+            treeNode.right = node + 2 * leftSize;
+
+            this.buildAgentTreeRecursive(begin, left, treeNode.left);
+            this.buildAgentTreeRecursive(left, end, treeNode.right);
+        }
+    }
+
+    queryAgentTreeRecursive4(result: { rangeSq: number; agentNo: number; }, position: Vector2, node: number, filter: (target: Agent) => boolean): void {
+        let treeNode = this.agentTree[node];
+        if (treeNode.end - treeNode.begin <= AgentKdTree.MAX_LEAF_SIZE) {
+            for (let i = treeNode.begin; i < treeNode.end; ++i) {
+                const target = this.agents[i];
+                if (filter(target)) continue;
+                let distSq = Vector2.distanceSq(position, target.position);
+                if (distSq < result.rangeSq) {
+                    result.rangeSq = distSq;
+                    result.agentNo = target.id;
+                }
+            }
+        } else {
+            let treeNodeLeft = this.agentTree[treeNode.left];
+            let treeNodeRight = this.agentTree[treeNode.right];
+            let distSqLeft: number = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - position.x))
+                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeLeft.maxX))
+                + RVOMath.sqr(Math.max(0.0, treeNodeLeft.minY - position.y))
+                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeLeft.maxY));
+            let distSqRight: number = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - position.x))
+                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeRight.maxX))
+                + RVOMath.sqr(Math.max(0.0, treeNodeRight.minY - position.y))
+                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeRight.maxY));
+
+            if (distSqLeft < distSqRight) {
+                if (distSqLeft < result.rangeSq) {
+                    this.queryAgentTreeRecursive4(result, position, treeNode.left, filter);
+
+                    if (distSqRight < result.rangeSq)
+                        this.queryAgentTreeRecursive4(result, position, treeNode.right, filter);
+                }
+            } else {
+                if (distSqRight < result.rangeSq) {
+                    this.queryAgentTreeRecursive4(result, position, treeNode.right, filter);
+
+                    if (distSqLeft < result.rangeSq)
+                        this.queryAgentTreeRecursive4(result, position, treeNode.left, filter);
+                }
+            }
+        }
+    }
+
+    /**
+     * Recursive method for computing the agent neighbors of the specified agent.
+     * @param agent The agent for which agent neighbors are to be computed.
+     * @param rangeSq The squared range around the agent.
+     * @param node The current agent k-D tree node index.
+     */
+    queryAgentTreeRecursive3(agent: Agent, rangeSq: number, node: number): number {
+        let treeNode = this.agentTree[node];
+        if (treeNode.end - treeNode.begin <= AgentKdTree.MAX_LEAF_SIZE) {
+            for (let i = treeNode.begin; i < treeNode.end; ++i) {
+                rangeSq = agent.insertAgentNeighbor(this.agents[i], rangeSq);
+            }
+        } else {
+            let treeNodeLeft = this.agentTree[treeNode.left];
+            let treeNodeRight = this.agentTree[treeNode.right];
+            let distSqLeft = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - agent.position.x))
+                + RVOMath.sqr(Math.max(0.0, agent.position.x - treeNodeLeft.maxX))
+                + RVOMath.sqr(Math.max(0.0, treeNodeLeft.minY - agent.position.y))
+                + RVOMath.sqr(Math.max(0.0, agent.position.y - treeNodeLeft.maxY));
+            let distSqRight = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - agent.position.x))
+                + RVOMath.sqr(Math.max(0.0, agent.position.x - treeNodeRight.maxX))
+                + RVOMath.sqr(Math.max(0.0, treeNodeRight.minY - agent.position.y))
+                + RVOMath.sqr(Math.max(0.0, agent.position.y - treeNodeRight.maxY));
+
+            if (distSqLeft < distSqRight) {
+                if (distSqLeft < rangeSq) {
+                    rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.left);
+
+                    if (distSqRight < rangeSq) {
+                        rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.right);
+                    }
+                }
+            } else {
+                if (distSqRight < rangeSq) {
+                    rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.right);
+
+                    if (distSqLeft < rangeSq)
+                        rangeSq = this.queryAgentTreeRecursive3(agent, rangeSq, treeNode.left);
+                }
+            }
+
+        }
+        return rangeSq;
     }
 }

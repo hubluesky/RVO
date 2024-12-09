@@ -8,7 +8,7 @@ export class Obstacle {
     previous: Obstacle;
     convex: boolean;
 
-    public constructor(public readonly id: number) { }
+    public constructor(public readonly id: number, public layer: number) { }
 
     private _direction_: Vector2 = new Vector2();
     public get direction(): Vector2 { return this._direction_; }
