@@ -47,7 +47,6 @@ export class Agent {
         obstrcleTree.computeObstacleNeighbors(this, rangeSq);
 
         this.agentNeighbors.length = 0;
-
         if (this.maxNeighbors > 0) {
             rangeSq = RVOMath.sqr(this.timeHorizon * this.maxSpeed + this.radius);
             kdTree.computeAgentNeighbors(this, rangeSq);
@@ -375,7 +374,7 @@ export class Agent {
         let distSq = Vector2.distanceSq(this.position, agent.position);
         const radiusSq = RVOMath.sqr(this.radius + agent.radius);
         if (distSq - radiusSq >= rangeSq) return rangeSq;
-
+        
         if (this.agentNeighbors.length < this.maxNeighbors) {
             this.agentNeighbors.push(new KeyValuePair(distSq, agent));
         }

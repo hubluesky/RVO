@@ -32,17 +32,32 @@ function drawPath(context: CanvasRenderingContext2D, path: readonly Vector2[], o
     context.stroke();
 }
 
+
+interface AgentRender {
+    id: number;
+    oldColor?: string;
+    color?: string;
+}
+
+interface SightRender {
+    position: Vector2;
+    radius: number;
+    color: string;
+}
+
 interface ExampleResult {
     goals: readonly Vector2[];
     agentRender: readonly AgentRender[];
     obstacleRender?: readonly Vector2[][];
+    sightRender?: readonly SightRender[];
 }
 
-interface AgentRender {
-    id: number; color?: string;
-}
 
-function renderAgents(context: CanvasRenderingContext2D, center: Vector2, agentRender: readonly AgentRender[], obstacleRender?: readonly Vector2[][]): void {
+function renderAgents(context: CanvasRenderingContext2D, center: Vector2, agentRender: readonly AgentRender[], obstacleRender?: readonly Vector2[][], sightRender?: readonly SightRender[]): void {
+    if (sightRender != null) {
+        for (const render of sightRender)
+            drawCicle(context, render.position.x + center.x, render.position.y + center.y, render.radius, render.color);
+    }
     if (obstacleRender != null) {
         for (const obstacle of obstacleRender)
             drawPath(context, obstacle, center, "#883300");
@@ -91,6 +106,27 @@ function reachedGoal(example: ExampleResult, deltaTime: number): boolean {
         }
     });
     return result;
+}
+
+function renderSightAgent(example: ExampleResult): void {
+    if (example.sightRender == null) return;
+
+    const checkInSight = function (position: Vector2, radius: number): boolean {
+        for (const render of example.sightRender) {
+            if (Vector2.distanceSq(position, render.position) <= (render.radius + radius) ** 2)
+                return true;
+        }
+        return false;
+    }
+
+    rvo.forEachAgent(agentNo => {
+        const position = rvo.getAgentPosition(agentNo);
+        if (checkInSight(position, rvo.getAgentRadius(agentNo))) {
+            example.agentRender[agentNo].color = "#00ff00";
+        } else {
+            example.agentRender[agentNo].color = "#000000";
+        }
+    });
 }
 
 
@@ -217,24 +253,24 @@ function circleObstacleExample(): ExampleResult {
     const radius = 10;
     const agentRender: AgentRender[] = [];
     const obstacleRender: Vector2[][] = [];
-    const speed = 250.0;
+    const speed = 50.0;
     /*
      * Add agents, specifying their start position, and store their
      * goals on the opposite side of the environment.
      */
-    const agentCount = 1;
-    const distance = 180;
+    const agentCount = 20;
+    const distance = 280;
     for (let i = 0; i < agentCount; ++i) {
         const position = new Vector2(Math.cos(i * 2 * Math.PI / agentCount), Math.sin(i * 2 * Math.PI / agentCount));
         goals.push(position.clone().multiply(-distance));
         const offset = new Vector2(Math.random(), Math.random());
         position.multiply(distance).add(offset);
-        const agentId = rvo.addAgent(Layer.Layer1, position, radius + 6 * i, speed, 0.01, 1, 10);
+        const agentId = rvo.addAgent(Layer.Layer1, position, radius, speed + Math.random() * 8);
         agentRender.push({ id: agentId, color: "#ffff00" });
     }
 
-    const agentId = rvo.addAgent(Layer.Layer2, new Vector2(), 100, 0, 0, 0, 0);
-    // rvo.freezeAgent(agentId);
+    const agentId = rvo.addAgent(Layer.Layer1, new Vector2(), 30, 0, 0, 0, 0);
+    rvo.freezeAgent(agentId);
     agentRender.push({ id: agentId, color: "#ff0000" });
 
     // const ow = 50, oh = 50, ox = 0, oy = 0;
@@ -250,14 +286,49 @@ function circleObstacleExample(): ExampleResult {
 }
 
 function queryNearAgentExample(): ExampleResult {
-    
+    const goals: Vector2[] = [];
+    const radius = 8;
+    const agentRender: AgentRender[] = [];
+    const obstacleRender: Vector2[][] = [];
+    const sightRender: SightRender[] = [];
+    const speed = 10.0;
+
+    const scale = 40;
+    const distance = 170;
+
+    const addAgent = function (layer: number, position: Vector2, r: number = radius) {
+        return rvo.addAgent(layer, position, r, speed);
+    }
+
+    const count = 5;
+    for (let i = 0; i < count; ++i) {
+        for (let j = 0; j < count; ++j) {
+            const position1 = new Vector2(distance + i * scale, j * scale);
+            const id1 = addAgent(Layer.Layer1, position1);
+
+            const position2 = new Vector2(-distance - i * scale, j * scale);
+            const id2 = addAgent(Layer.Layer1, position2);
+
+            goals[id1] = position2;
+            goals[id2] = position1;
+
+            agentRender[id1] = { id: id1, color: "#eeeeee" };
+            agentRender[id2] = { id: id2, color: "#eeeeee" };
+        }
+    }
+
+    sightRender.push({ position: new Vector2(0, 0), radius: 80, color: "#eeee00" });
+    sightRender.push({ position: new Vector2(20, 130), radius: 50, color: "#eeee00" });
+
+    return { goals, agentRender, obstacleRender, sightRender };
 }
 
 export function main() {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
     const context = canvas.getContext("2d");
     const center = new Vector2(canvas.width / 2, canvas.height / 2);
-    const result = blockExample();
+    const result = queryNearAgentExample();
+    // const result = blockExample();
     // const result = circleExample();
     // const result = circleObstacleExample();
 
@@ -272,9 +343,11 @@ export function main() {
         lastTime = curTime;
         setPreferredVelocities(result.goals);
         rvo.doStep(deltaTime);
-        if (!reachedGoal(result, deltaTime))
+        renderSightAgent(result);
+        if (!reachedGoal(result, deltaTime)) {
             requestAnimationFrame(step);
-        renderAgents(context, center, result.agentRender, result.obstacleRender);
+        }
+        renderAgents(context, center, result.agentRender, result.obstacleRender, result.sightRender);
     }
     step();
 }
