@@ -1,9 +1,8 @@
 import { Agent } from "./Agent";
 import { AgentKdTree, ObstacleKdTree } from "./KdTree";
-import { Line } from "./Line";
 import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
-import { Vector2 } from "./Vector2";
+import { IVector2, Vector2 } from "./Vector2";
 
 /*
  * Copyright 2008 University of North Carolina at Chapel Hill
@@ -106,7 +105,7 @@ export class Simulator {
      * is too low, the simulation will not be safe.
      * @returns The number of the agent.
      */
-    addAgent(layer: number, position: Vector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10): number {
+    addAgent(layer: number, position: IVector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10): number {
         console.assert(this.layerMasks[layer] != null, "layer " + layer + " is not defined");
         let agent = new Agent(this, this.agents.length, layer);
         agent.position.set(position);
@@ -135,7 +134,7 @@ export class Simulator {
      * @param vertices List of the vertices of the polygonal obstacle in counterclockwise order.
      * @returns The number of the first vertex of the obstacle, or -1 when the number of vertices is less than two.
      */
-    addObstacle(layer: number, vertices: readonly Vector2[]): number {
+    addObstacle(layer: number, vertices: readonly IVector2[]): number {
         console.assert(this.layerMasks[layer] != null, "layer " + layer + " is not defined");
         console.assert(vertices.length >= 2);
         if (vertices.length < 2)
@@ -157,7 +156,7 @@ export class Simulator {
                 obstacle.next.previous = obstacle;
             }
 
-            Vector2.subtract(vertices[(i == vertices.length - 1 ? 0 : i + 1)], vertices[i], obstacle.direction).normalize();
+            Vector2.subtract(vertices[(i == vertices.length - 1 ? 0 : i + 1)], vertices[i], obstacle.direction as Vector2).normalize();
 
             if (vertices.length == 2) {
                 obstacle.convex = true;
@@ -305,7 +304,7 @@ export class Simulator {
      * @param agentNo The number of the agent whose two-dimensional position is to be retrieved.
      * @returns The present two-dimensional position of the (center of the) agent.
      */
-    public getAgentPosition(agentNo: number): Vector2 {
+    public getAgentPosition(agentNo: number): IVector2 {
         return this.agents[agentNo].position;
     }
 
@@ -314,7 +313,7 @@ export class Simulator {
      * @param agentNo The number of the agent whose two-dimensional preferred velocity is to be retrieved.
      * @returns The present two-dimensional preferred velocity of the agent.
      */
-    public getAgentPrefVelocity(agentNo: number): Vector2 {
+    public getAgentPrefVelocity(agentNo: number): IVector2 {
         return this.agents[agentNo].prefVelocity;
     }
 
@@ -350,7 +349,7 @@ export class Simulator {
      * @param agentNo The number of the agent whose two-dimensional linear velocity is to be retrieved.
      * @returns The present two-dimensional linear velocity of the agent.
      */
-    public getAgentVelocity(agentNo: number): Vector2 {
+    public getAgentVelocity(agentNo: number): IVector2 {
         return this.agents[agentNo].velocity;
     }
 
@@ -375,7 +374,7 @@ export class Simulator {
      * @param vertexNo The number of the obstacle vertex to be retrieved.
      * @returns The two-dimensional position of the specified obstacle vertex.
      */
-    public getObstacleVertex(vertexNo: number): Vector2 {
+    public getObstacleVertex(vertexNo: number): IVector2 {
         return this.obstacles[vertexNo].point;
     }
 
@@ -415,11 +414,11 @@ export class Simulator {
      * @returns A boolean specifying whether the two points are mutually
      * visible. Returns true when the obstacles have not been processed.
      */
-    queryVisibility(point1: Vector2, point2: Vector2, radius: number): boolean {
+    queryVisibility(point1: IVector2, point2: IVector2, radius: number): boolean {
         return this.obstrcleTree.queryVisibility(point1, point2, radius);
     }
 
-    queryNearAgent(point: Vector2, radius: number, out: number[] = []): number[] {
+    queryNearAgent(point: IVector2, radius: number, out: number[] = []): number[] {
         if (this.agentCount == 0) return out;
         return this.agentTree.queryNearAgent(point, radius, out);
     }
@@ -468,7 +467,7 @@ export class Simulator {
      * @param agentNo The number of the agent whose two-dimensional position is to be modified.
      * @param position The replacement of the two-dimensional position.
      */
-    public setAgentPosition(agentNo: number, position: Vector2): void {
+    public setAgentPosition(agentNo: number, position: IVector2): void {
         this.agents[agentNo].position.set(position);
     }
 
@@ -477,7 +476,7 @@ export class Simulator {
      * @param agentNo The number of the agent whose two-dimensional preferred velocity is to be modified.
      * @param prefVelocity The replacement of the two-dimensional preferred velocity.
      */
-    public setAgentPrefVelocity(agentNo: number, prefVelocity: Vector2): void {
+    public setAgentPrefVelocity(agentNo: number, prefVelocity: IVector2): void {
         this.agents[agentNo].prefVelocity.set(prefVelocity);
     }
 
@@ -513,7 +512,7 @@ export class Simulator {
      * @param agentNo The number of the agent whose two-dimensional linear velocity is to be modified.
      * @param velocity The replacement two-dimensional linear velocity.
      */
-    public setAgentVelocity(agentNo: number, velocity: Vector2): void {
+    public setAgentVelocity(agentNo: number, velocity: IVector2): void {
         this.agents[agentNo].velocity.set(velocity);
     }
 }

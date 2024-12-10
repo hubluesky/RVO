@@ -2,7 +2,7 @@ import { Agent } from "./Agent";
 import { Obstacle } from "./Obstacle";
 import { RVOMath } from "./RVOMath";
 import { Simulator } from "./Simulator";
-import { Vector2 } from "./Vector2";
+import { IVector2, Vector2 } from "./Vector2";
 
 const __vecTemp1 = new Vector2();
 const __vecTemp2 = new Vector2();
@@ -227,7 +227,7 @@ export class ObstacleKdTree {
      * @param radius The radius within which visibility is to be tested.
      * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
      */
-    queryVisibility(q1: Vector2, q2: Vector2, radius: number): boolean {
+    queryVisibility(q1: IVector2, q2: IVector2, radius: number): boolean {
         return this.queryVisibilityRecursive(q1, q2, radius, this.obstacleTree);
     }
 
@@ -271,7 +271,7 @@ export class ObstacleKdTree {
      * @param node The current obstacle k-D node.
      * @returns True if q1 and q2 are mutually visible within the radius; false otherwise.
      */
-    queryVisibilityRecursive(q1: Vector2, q2: Vector2, radius: number, node: ObstacleTreeNode): boolean {
+    queryVisibilityRecursive(q1: IVector2, q2: IVector2, radius: number, node: ObstacleTreeNode): boolean {
         if (node == null) return true;
 
         let obstacle1 = node.obstacle;
@@ -357,7 +357,7 @@ export class AgentKdTree {
         return this.queryAgentTreeRecursive3(agent, rangeSq, 0);
     }
 
-    queryNearAgent(point: Vector2, radius: number, out: number[] = []): number[] {
+    queryNearAgent(point: IVector2, radius: number, out: number[] = []): number[] {
         return this.queryAgentTreeRecursive4(point, radius * radius, 0, out);
     }
 
@@ -423,7 +423,7 @@ export class AgentKdTree {
         }
     }
 
-    queryAgentTreeRecursive4(position: Vector2, rangeSq: number, node: number, out: number[]): number[] {
+    queryAgentTreeRecursive4(position: IVector2, rangeSq: number, node: number, out: number[]): number[] {
         let treeNode = this.agentTree[node];
         if (treeNode.end - treeNode.begin <= AgentKdTree.MAX_LEAF_SIZE) {
             for (let i = treeNode.begin; i < treeNode.end; ++i) {

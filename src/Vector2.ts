@@ -1,7 +1,9 @@
+export interface IVector2 { x: number, y: number }
+
 /**
  * Defines a two-dimensional vector.
  */
-export class Vector2 {
+export class Vector2 implements IVector2 {
     /**
      * Constructs and initializes a two-dimensional vector from the
      * specified xy-coordinates.
@@ -42,7 +44,7 @@ export class Vector2 {
         return this.multiply(1 / this.length());
     }
 
-    public dot(other: Vector2): number {
+    public dot(other: IVector2): number {
         return this.x * other.x + this.y * other.y;
     }
 
@@ -51,7 +53,7 @@ export class Vector2 {
      * @param other The bottom row of the two-dimensional square matrix.
      * @returns The determinant of the two-dimensional square matrix.
      */
-    public cross(other: Vector2): number {
+    public cross(other: IVector2): number {
         return this.x * other.y - this.y * other.x;
     }
 
@@ -67,13 +69,13 @@ export class Vector2 {
         return this;
     }
 
-    public add(other: Vector2): this {
+    public add(other: IVector2): this {
         this.x = this.x + other.x;
         this.y = this.y + other.y;
         return this;
     }
 
-    public subtract(other: Vector2): this {
+    public subtract(other: IVector2): this {
         this.x = this.x - other.x;
         this.y = this.y - other.y;
         return this;
@@ -85,7 +87,7 @@ export class Vector2 {
         return this;
     }
 
-    public set(other: Vector2): Vector2 {
+    public set(other: IVector2): this {
         this.x = other.x;
         this.y = other.y;
         return this;
@@ -105,13 +107,17 @@ export class Vector2 {
         return new Vector2(this.x, this.y);
     }
 
-    public static distanceSq(vector1: Vector2, vector2: Vector2): number {
+    public static lengthSq(vector: IVector2): number {
+        return Vector2.dot(vector, vector);
+    }
+
+    public static distanceSq(vector1: IVector2, vector2: IVector2): number {
         const x = vector1.x - vector2.x;
         const y = vector1.y - vector2.y;
         return x * x + y * y;
     }
 
-    public static distance(vector1: Vector2, vector2: Vector2): number {
+    public static distance(vector1: IVector2, vector2: IVector2): number {
         return Math.sqrt(Vector2.distanceSq(vector1, vector2));
     }
 
@@ -123,7 +129,7 @@ export class Vector2 {
      * @param out The out vector.
      * @returns The vector sum of the two specified two-dimensional vectors.
      */
-    public static add(a: Vector2, b: Vector2, out: Vector2 = new Vector2()): Vector2 {
+    public static add(a: IVector2, b: IVector2, out: Vector2 = new Vector2()): Vector2 {
         out.x = a.x + b.x;
         out.y = a.y + b.y;
         return out;
@@ -136,7 +142,7 @@ export class Vector2 {
      * @param out The out vector.
      * @returns The vector difference of the two specified two-dimensional vectors.
      */
-    public static subtract(a: Vector2, b: Vector2, out: Vector2 = new Vector2()): Vector2 {
+    public static subtract(a: IVector2, b: IVector2, out: Vector2 = new Vector2()): Vector2 {
         out.x = a.x - b.x;
         out.y = a.y - b.y;
         return out;
@@ -151,7 +157,7 @@ export class Vector2 {
      * @returns The scalar multiplication of the specified two-dimensional
      * vector with the specified scalar value.
      */
-    public static multiply(a: Vector2, scalar: number, out: Vector2 = new Vector2()): Vector2 {
+    public static multiply(a: IVector2, scalar: number, out: Vector2 = new Vector2()): Vector2 {
         out.x = a.x * scalar;
         out.y = a.y * scalar;
         return out;
@@ -166,7 +172,7 @@ export class Vector2 {
      * @returns The scalar division of the specified two-dimensional vector
      * with the specified scalar value.
      */
-    public static divide(a: Vector2, scalar: number, out: Vector2 = new Vector2()): Vector2 {
+    public static divide(a: IVector2, scalar: number, out: Vector2 = new Vector2()): Vector2 {
         out.x = a.x / scalar;
         out.y = a.y / scalar;
         return out;
@@ -180,7 +186,7 @@ export class Vector2 {
      * @returns The dot product of the two specified two-dimensional
      * vectors.
      */
-    public static dot(a: Vector2, b: Vector2): number {
+    public static dot(a: IVector2, b: IVector2): number {
         return a.x * b.x + a.y * b.y;
     }
 
@@ -190,7 +196,7 @@ export class Vector2 {
      * @param vector2 The bottom row of the two-dimensional square matrix.
      * @returns The determinant of the two-dimensional square matrix.
      */
-    public static cross(vector1: Vector2, vector2: Vector2): number {
+    public static cross(vector1: IVector2, vector2: IVector2): number {
         return vector1.x * vector2.y - vector1.y * vector2.x;
     }
 
@@ -199,8 +205,8 @@ export class Vector2 {
      * @param vector The two-dimensional vector whose normalization is to be computed.
      * @returns The normalization of the two-dimensional vector.
      */
-    public static normalize(vector: Vector2, out: Vector2 = new Vector2): Vector2 {
-        return Vector2.divide(vector, vector.length(), out);
+    public static normalize(vector: IVector2, out: Vector2 = new Vector2): Vector2 {
+        return Vector2.divide(vector, Math.sqrt(Vector2.lengthSq(vector)), out);
     }
 
     /**
@@ -209,7 +215,7 @@ export class Vector2 {
      * @param out The out vector.
      * @returns The negation of the specified two-dimensional vector.
      */
-    public static negate(a: Vector2, out: Vector2 = new Vector2()): Vector2 {
+    public static negate(a: IVector2, out: Vector2 = new Vector2()): Vector2 {
         out.x = -a.x;
         out.y = -a.y;
         return out;
