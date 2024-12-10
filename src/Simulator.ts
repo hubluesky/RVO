@@ -222,6 +222,10 @@ export class Simulator {
         return this.agents[agentNo];
     }
 
+    public getAgentLayer(agentNo: number): number {
+        return this.agents[agentNo].layer;
+    }
+
     // /**
     //  * Returns the specified agent neighbor of the specified agent.
     //  * @param agentNo The number of the agent whose agent neighbor is to be retrieved.
@@ -358,6 +362,14 @@ export class Simulator {
         return this.obstacles.length;
     }
 
+    public getObstacleLayer(vertexNo: number): number {
+        return this.obstacles[vertexNo].layer;
+    }
+
+    public setObstacleLayer(vertexNo: number, layer: number) {
+        this.obstacles[vertexNo].layer = layer;
+    }
+
     /**
      * Returns the two-dimensional position of a specified obstacle vertex.
      * @param vertexNo The number of the obstacle vertex to be retrieved.
@@ -407,9 +419,9 @@ export class Simulator {
         return this.obstrcleTree.queryVisibility(point1, point2, radius);
     }
 
-    queryNearAgent(point: Vector2, radius: number, filter: (target: Agent) => boolean = () => false): number {
-        if (this.agentCount == 0) return -1;
-        return this.agentTree.queryNearAgent(point, radius, filter);
+    queryNearAgent(point: Vector2, radius: number, out: number[] = []): number[] {
+        if (this.agentCount == 0) return out;
+        return this.agentTree.queryNearAgent(point, radius, out);
     }
 
     public freezeAgent(agentNo: number): void {
@@ -427,6 +439,10 @@ export class Simulator {
 
     public getAgentUserData<T>(agentNo: number): T {
         return this.agents[agentNo].userData;
+    }
+
+    public setAgentLayer(agentNo: number, layer: number): void {
+        this.agents[agentNo].layer = layer;
     }
 
     /**

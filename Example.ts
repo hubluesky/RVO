@@ -108,25 +108,22 @@ function reachedGoal(example: ExampleResult, deltaTime: number): boolean {
     return result;
 }
 
+const collisionAgentIds: number[] = [];
 function renderSightAgent(example: ExampleResult): void {
     if (example.sightRender == null) return;
 
-    const checkInSight = function (position: Vector2, radius: number): boolean {
-        for (const render of example.sightRender) {
-            if (Vector2.distanceSq(position, render.position) <= (render.radius + radius) ** 2)
-                return true;
-        }
-        return false;
+    for (const agentNo of collisionAgentIds) {
+        example.agentRender[agentNo].color = "#000000";
     }
 
-    rvo.forEachAgent(agentNo => {
-        const position = rvo.getAgentPosition(agentNo);
-        if (checkInSight(position, rvo.getAgentRadius(agentNo))) {
-            example.agentRender[agentNo].color = "#00ff00";
-        } else {
-            example.agentRender[agentNo].color = "#000000";
-        }
-    });
+    collisionAgentIds.length = 0;
+    for (const render of example.sightRender) {
+        rvo.queryNearAgent(render.position, render.radius, collisionAgentIds);
+    }
+
+    for (const agentNo of collisionAgentIds) {
+        example.agentRender[agentNo].color = "#00ff00";
+    }
 }
 
 
@@ -291,7 +288,7 @@ function queryNearAgentExample(): ExampleResult {
     const agentRender: AgentRender[] = [];
     const obstacleRender: Vector2[][] = [];
     const sightRender: SightRender[] = [];
-    const speed = 10.0;
+    const speed = 20.0;
 
     const scale = 40;
     const distance = 170;

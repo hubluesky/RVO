@@ -357,12 +357,8 @@ export class AgentKdTree {
         return this.queryAgentTreeRecursive3(agent, rangeSq, 0);
     }
 
-    queryNearAgent(point: Vector2, radius: number, filter: (target: Agent) => boolean): number {
-        const result = { rangeSq: Number.MAX_VALUE, agentNo: -1 };
-        this.queryAgentTreeRecursive4(result, point, 0, filter);
-        if (result.rangeSq < radius * radius)
-            return result.agentNo;
-        return -1;
+    queryNearAgent(point: Vector2, radius: number, out: number[] = []): number[] {
+        return this.queryAgentTreeRecursive4(point, radius * radius, 0, out);
     }
 
     /**
@@ -427,17 +423,14 @@ export class AgentKdTree {
         }
     }
 
-    queryAgentTreeRecursive4(result: { rangeSq: number; agentNo: number; }, position: Vector2, node: number, filter: (target: Agent) => boolean): void {
+    queryAgentTreeRecursive4(position: Vector2, rangeSq: number, node: number, out: number[]): number[] {
         let treeNode = this.agentTree[node];
         if (treeNode.end - treeNode.begin <= AgentKdTree.MAX_LEAF_SIZE) {
             for (let i = treeNode.begin; i < treeNode.end; ++i) {
                 const target = this.agents[i];
-                if (filter(target)) continue;
                 let distSq = Vector2.distanceSq(position, target.position);
-                if (distSq < result.rangeSq) {
-                    result.rangeSq = distSq;
-                    result.agentNo = target.id;
-                }
+                if (distSq < rangeSq)
+                    out.push(target.id);
             }
         } else {
             let treeNodeLeft = this.agentTree[treeNode.left];
@@ -452,21 +445,22 @@ export class AgentKdTree {
                 + RVOMath.sqr(Math.max(0.0, position.y - treeNodeRight.maxY));
 
             if (distSqLeft < distSqRight) {
-                if (distSqLeft < result.rangeSq) {
-                    this.queryAgentTreeRecursive4(result, position, treeNode.left, filter);
+                if (distSqLeft < rangeSq) {
+                    this.queryAgentTreeRecursive4(position, rangeSq, treeNode.left, out);
 
-                    if (distSqRight < result.rangeSq)
-                        this.queryAgentTreeRecursive4(result, position, treeNode.right, filter);
+                    if (distSqRight < rangeSq)
+                        this.queryAgentTreeRecursive4(position, rangeSq, treeNode.right, out);
                 }
             } else {
-                if (distSqRight < result.rangeSq) {
-                    this.queryAgentTreeRecursive4(result, position, treeNode.right, filter);
+                if (distSqRight < rangeSq) {
+                    this.queryAgentTreeRecursive4(position, rangeSq, treeNode.right, out);
 
-                    if (distSqLeft < result.rangeSq)
-                        this.queryAgentTreeRecursive4(result, position, treeNode.left, filter);
+                    if (distSqLeft < rangeSq)
+                        this.queryAgentTreeRecursive4(position, rangeSq, treeNode.left, out);
                 }
             }
         }
+        return out;
     }
 
     /**
