@@ -118,7 +118,7 @@ function renderSightAgent(example: ExampleResult): void {
 
     collisionAgentIds.length = 0;
     for (const render of example.sightRender) {
-        rvo.queryNearAgent(render.position, render.radius, collisionAgentIds);
+        rvo.queryNearAgent(render.position, render.radius, (agentId) => collisionAgentIds.push(agentId));
     }
 
     for (const agentNo of collisionAgentIds) {
@@ -186,13 +186,13 @@ function blockExample(): ExampleResult {
             const id1 = addAgent(Layer.Layer1, position1);
 
             const position2 = new Vector2(-distance - i * scale, distance + j * scale);
-            const id2 = addAgent(Layer.Layer2, position2);
+            const id2 = addAgent(Layer.Layer1, position2);
 
             const position3 = new Vector2(distance + i * scale, -distance - j * scale);
             const id3 = addAgent(Layer.Layer1, position3);
 
             const position4 = new Vector2(-distance - i * scale, -distance - j * scale);
-            const id4 = addAgent(Layer.Layer2, position4);
+            const id4 = addAgent(Layer.Layer1, position4);
 
             goals[id1] = position4;
             goals[id2] = position3;
@@ -282,6 +282,39 @@ function circleObstacleExample(): ExampleResult {
     return { goals, agentRender, obstacleRender };
 }
 
+function blockObstacleExample(): ExampleResult {
+    const goals: Vector2[] = [];
+    const radius = 10;
+    const agentRender: AgentRender[] = [];
+    const obstacleRender: Vector2[][] = [];
+    const speed = 50.0;
+    /*
+     * Add agents, specifying their start position, and store their
+     * goals on the opposite side of the environment.
+     */
+    const agentCount = 4;
+    const distance = 280;
+    for (let i = 0; i < agentCount; ++i) {
+        const position = new Vector2(Math.cos(i * 2 * Math.PI / agentCount), Math.sin(i * 2 * Math.PI / agentCount));
+        goals.push(position.clone().multiply(-distance));
+        const offset = new Vector2(Math.random(), Math.random());
+        position.multiply(distance).add(offset);
+        const agentId = rvo.addAgent(Layer.Layer1, position, radius, speed + Math.random() * 8);
+        agentRender.push({ id: agentId, color: "#ffff00" });
+    }
+
+    const ow = 50, oh = 50, ox = 0, oy = 0;
+    const obstacle1: Vector2[] = [];
+    obstacle1.push(new Vector2(-ow + ox, -oh + oy));
+    obstacle1.push(new Vector2(+ow + ox, -oh + oy));
+    obstacle1.push(new Vector2(+ow + ox, +oh + oy));
+    obstacle1.push(new Vector2(-ow + ox, +oh + oy));
+    const obstacleId1 = rvo.addObstacle(Layer.Layer1,obstacle1);
+    obstacleRender.push(obstacle1);
+
+    return { goals, agentRender, obstacleRender };
+}
+
 function queryNearAgentExample(): ExampleResult {
     const goals: Vector2[] = [];
     const radius = 8;
@@ -324,10 +357,11 @@ export function main() {
     const canvas = document.getElementById("canvas") as HTMLCanvasElement;
     const context = canvas.getContext("2d");
     const center = new Vector2(canvas.width / 2, canvas.height / 2);
-    const result = queryNearAgentExample();
+    // const result = queryNearAgentExample();
     // const result = blockExample();
     // const result = circleExample();
     // const result = circleObstacleExample();
+    const result = blockObstacleExample();
 
     rvo.processObstacles();
     let lastTime = Date.now();

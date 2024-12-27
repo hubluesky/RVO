@@ -8,7 +8,7 @@ export default [{
     input: input,
     output: {
         // sourcemap: "inline",
-        file: `./dist/${outputName}.mjs`,
+        file: `./dist/${outputName}.js`,
         format: "es",
         // name: 'rvo',
     },

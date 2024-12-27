@@ -77,7 +77,6 @@ export class Simulator {
     public forEachAgent(callback: (agentNo: number) => void) {
         for (const agentNo in this.agents) {
             callback(agentNo as any);
-            // callback(this.agents_[agentNo].id_);
         }
     }
 
@@ -105,9 +104,9 @@ export class Simulator {
      * is too low, the simulation will not be safe.
      * @returns The number of the agent.
      */
-    addAgent(layer: number, position: IVector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10): number {
+    public addAgent(layer: number, position: IVector2, radius: number, maxSpeed: number, timeHorizon: number = 1, timeHorizonObst: number = 1, maxNeighbors: number = 10): number {
         console.assert(this.layerMasks[layer] != null, "layer " + layer + " is not defined");
-        let agent = new Agent(this, this.agents.length, layer);
+        const agent = new Agent(this, this.agents.length, layer);
         agent.position.set(position);
         agent.radius = radius;
         agent.maxSpeed = maxSpeed;
@@ -119,7 +118,7 @@ export class Simulator {
         return agent.id;
     }
 
-    delAgent(agentNo: number): void {
+    public delAgent(agentNo: number): void {
         const agent = this.agents[agentNo];
         if (agent == null) return;
         this.agentTree.delAgent(agent);
@@ -134,16 +133,16 @@ export class Simulator {
      * @param vertices List of the vertices of the polygonal obstacle in counterclockwise order.
      * @returns The number of the first vertex of the obstacle, or -1 when the number of vertices is less than two.
      */
-    addObstacle(layer: number, vertices: readonly IVector2[]): number {
+    public addObstacle(layer: number, vertices: readonly IVector2[]): number {
         console.assert(this.layerMasks[layer] != null, "layer " + layer + " is not defined");
         console.assert(vertices.length >= 2);
         if (vertices.length < 2)
             return -1;
 
-        let obstacleNo = this.obstacles.length;
+        const obstacleNo = this.obstacles.length;
 
         for (let i = 0; i < vertices.length; ++i) {
-            let obstacle = new Obstacle(obstacleNo, layer);
+            const obstacle = new Obstacle(obstacleNo, layer);
             obstacle.point = vertices[i];
 
             if (i > 0) {
@@ -189,7 +188,7 @@ export class Simulator {
     /**
      * Clears the simulation.
      */
-    clear(): void {
+    public clear(): void {
         this.agents.length = 0;
         this.agentTree = new AgentKdTree(this);
         this.obstrcleTree = new ObstacleKdTree();
@@ -200,7 +199,7 @@ export class Simulator {
      * position and two-dimensional velocity of each agent.
      * @param timeStep The time step of the simulation. Must be positive.
      */
-    doStep(timeStep: number): void {
+    public doStep(timeStep: number): void {
         this.agentTree.buildAgentTree();
 
         this.forEachAgent((agentNo) => {
@@ -400,7 +399,7 @@ export class Simulator {
      * Processes the obstacles that have been added so that they are accounted for in the simulation.
      * Obstacles added to the simulation after this function has been called are not accounted for in the simulation.
      */
-    processObstacles(): void {
+    public processObstacles(): void {
         this.obstrcleTree.buildObstacleTree(this.obstacles);
     }
 
@@ -414,13 +413,13 @@ export class Simulator {
      * @returns A boolean specifying whether the two points are mutually
      * visible. Returns true when the obstacles have not been processed.
      */
-    queryVisibility(point1: IVector2, point2: IVector2, radius: number): boolean {
+    public queryVisibility(point1: IVector2, point2: IVector2, radius: number): boolean {
         return this.obstrcleTree.queryVisibility(point1, point2, radius);
     }
 
-    queryNearAgent(point: IVector2, radius: number, out: number[] = []): number[] {
-        if (this.agentCount == 0) return out;
-        return this.agentTree.queryNearAgent(point, radius, out);
+    public queryNearAgent(point: IVector2, radius: number, callback: (angntId: number) => void): void {
+        if (this.agentCount == 0) return;
+        return this.agentTree.queryNearAgent(point, radius, callback);
     }
 
     public freezeAgent(agentNo: number): void {

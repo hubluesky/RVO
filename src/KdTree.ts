@@ -102,7 +102,7 @@ export class ObstacleKdTree {
         if (obstacles.length == 0)
             return null;
 
-        let node = new ObstacleTreeNode();
+        const node = new ObstacleTreeNode();
 
         let optimalSplit: number = 0;
         let minLeft: number = obstacles.length;
@@ -112,19 +112,19 @@ export class ObstacleKdTree {
             let leftSize: number = 0;
             let rightSize: number = 0;
 
-            let obstacleI1 = obstacles[i];
-            let obstacleI2 = obstacleI1.next;
+            const obstacleI1 = obstacles[i];
+            const obstacleI2 = obstacleI1.next;
 
             /* Compute optimal split node. */
             for (let j = 0; j < obstacles.length; ++j) {
                 if (i == j)
                     continue;
 
-                let obstacleJ1 = obstacles[j];
-                let obstacleJ2 = obstacleJ1.next;
+                const obstacleJ1 = obstacles[j];
+                const obstacleJ2 = obstacleJ1.next;
 
-                let j1LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ1.point);
-                let j2LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ2.point);
+                const j1LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ1.point);
+                const j2LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ2.point);
 
                 if (j1LeftOfI >= -RVOMath.RVO_EPSILON && j2LeftOfI >= -RVOMath.RVO_EPSILON) {
                     ++leftSize;
@@ -151,25 +151,25 @@ export class ObstacleKdTree {
 
         {
             /* Build split node. */
-            let leftObstacles = new Array<Obstacle>(minLeft);
-            let rightObstacles = new Array<Obstacle>(minRight);
+            const leftObstacles = new Array<Obstacle>(minLeft);
+            const rightObstacles = new Array<Obstacle>(minRight);
 
             let leftCounter: number = 0;
             let rightCounter: number = 0;
-            let i: number = optimalSplit;
+            const i: number = optimalSplit;
 
-            let obstacleI1 = obstacles[i];
-            let obstacleI2 = obstacleI1.next;
+            const obstacleI1 = obstacles[i];
+            const obstacleI2 = obstacleI1.next;
 
             for (let j = 0; j < obstacles.length; ++j) {
                 if (i == j)
                     continue;
 
-                let obstacleJ1 = obstacles[j];
-                let obstacleJ2 = obstacleJ1.next;
+                const obstacleJ1 = obstacles[j];
+                const obstacleJ2 = obstacleJ1.next;
 
-                let j1LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ1.point);
-                let j2LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ2.point);
+                const j1LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ1.point);
+                const j2LeftOfI: number = RVOMath.leftOf(obstacleI1.point, obstacleI2.point, obstacleJ2.point);
 
                 if (j1LeftOfI >= -RVOMath.RVO_EPSILON && j2LeftOfI >= -RVOMath.RVO_EPSILON) {
                     leftObstacles[leftCounter++] = obstacles[j];
@@ -177,12 +177,12 @@ export class ObstacleKdTree {
                     rightObstacles[rightCounter++] = obstacles[j];
                 } else {
                     /* Split obstacle j. */
-                    let i2si1 = Vector2.subtract(obstacleI2.point, obstacleI1.point, __vecTemp1);
-                    let t: number = Vector2.cross(i2si1, Vector2.subtract(obstacleJ1.point, obstacleI1.point, __vecTemp2)) / Vector2.cross(i2si1, Vector2.subtract(obstacleJ1.point, obstacleJ2.point, __vecTemp2));
+                    const i2si1 = Vector2.subtract(obstacleI2.point, obstacleI1.point, __vecTemp1);
+                    const t: number = Vector2.cross(i2si1, Vector2.subtract(obstacleJ1.point, obstacleI1.point, __vecTemp2)) / Vector2.cross(i2si1, Vector2.subtract(obstacleJ1.point, obstacleJ2.point, __vecTemp2));
 
-                    let splitPoint: Vector2 = Vector2.subtract(obstacleJ2.point, obstacleJ1.point, __vecTemp1).multiply(t).add(obstacleJ1.point);
+                    const splitPoint: Vector2 = Vector2.subtract(obstacleJ2.point, obstacleJ1.point, __vecTemp1).multiply(t).add(obstacleJ1.point);
 
-                    let newObstacle = new Obstacle(obstacleJ1.id, obstacleJ1.layer);
+                    const newObstacle = new Obstacle(obstacleJ1.id, obstacleJ1.layer);
                     newObstacle.point = splitPoint;
                     newObstacle.previous = obstacleJ1;
                     newObstacle.next = obstacleJ2;
@@ -240,14 +240,14 @@ export class ObstacleKdTree {
      */
     queryObstacleTreeRecursive(agent: Agent, rangeSq: number, node: ObstacleTreeNode): void {
         if (node == null) return;
-        let obstacle1 = node.obstacle;
-        let obstacle2 = obstacle1.next;
+        const obstacle1 = node.obstacle;
+        const obstacle2 = obstacle1.next;
 
-        let agentLeftOfLine = RVOMath.leftOf(obstacle1.point, obstacle2.point, agent.position);
+        const agentLeftOfLine = RVOMath.leftOf(obstacle1.point, obstacle2.point, agent.position);
 
         this.queryObstacleTreeRecursive(agent, rangeSq, agentLeftOfLine >= 0.0 ? node.left : node.right);
 
-        let distSqLine = RVOMath.sqr(agentLeftOfLine) / Vector2.subtract(obstacle2.point, obstacle1.point, __vecTemp1).lengthSq();
+        const distSqLine = RVOMath.sqr(agentLeftOfLine) / Vector2.subtract(obstacle2.point, obstacle1.point, __vecTemp1).lengthSq();
 
         if (distSqLine < rangeSq) {
             if (agentLeftOfLine < 0.0) {
@@ -274,12 +274,12 @@ export class ObstacleKdTree {
     queryVisibilityRecursive(q1: IVector2, q2: IVector2, radius: number, node: ObstacleTreeNode): boolean {
         if (node == null) return true;
 
-        let obstacle1 = node.obstacle;
-        let obstacle2 = obstacle1.next;
+        const obstacle1 = node.obstacle;
+        const obstacle2 = obstacle1.next;
 
-        let q1LeftOfI = RVOMath.leftOf(obstacle1.point, obstacle2.point, q1);
-        let q2LeftOfI = RVOMath.leftOf(obstacle1.point, obstacle2.point, q2);
-        let invLengthI = 1.0 / Vector2.subtract(obstacle2.point, obstacle1.point, __vecTemp1).lengthSq();
+        const q1LeftOfI = RVOMath.leftOf(obstacle1.point, obstacle2.point, q1);
+        const q2LeftOfI = RVOMath.leftOf(obstacle1.point, obstacle2.point, q2);
+        const invLengthI = 1.0 / Vector2.subtract(obstacle2.point, obstacle1.point, __vecTemp1).lengthSq();
 
         if (q1LeftOfI >= 0.0 && q2LeftOfI >= 0.0) {
             return this.queryVisibilityRecursive(q1, q2, radius, node.left) && ((RVOMath.sqr(q1LeftOfI) * invLengthI >= RVOMath.sqr(radius)
@@ -296,9 +296,9 @@ export class ObstacleKdTree {
             return this.queryVisibilityRecursive(q1, q2, radius, node.left) && this.queryVisibilityRecursive(q1, q2, radius, node.right);
         }
 
-        let point1LeftOfQ = RVOMath.leftOf(q1, q2, obstacle1.point);
-        let point2LeftOfQ = RVOMath.leftOf(q1, q2, obstacle2.point);
-        let invLengthQ = 1.0 / Vector2.subtract(q2, q1, __vecTemp1).lengthSq();
+        const point1LeftOfQ = RVOMath.leftOf(q1, q2, obstacle1.point);
+        const point2LeftOfQ = RVOMath.leftOf(q1, q2, obstacle2.point);
+        const invLengthQ = 1.0 / Vector2.subtract(q2, q1, __vecTemp1).lengthSq();
 
         return point1LeftOfQ * point2LeftOfQ >= 0.0 && RVOMath.sqr(point1LeftOfQ) * invLengthQ > RVOMath.sqr(radius)
             && RVOMath.sqr(point2LeftOfQ) * invLengthQ > RVOMath.sqr(radius)
@@ -321,8 +321,8 @@ export class AgentKdTree {
     /**
      * Builds an agent k-D tree.
      */
-    buildAgentTree() {
-        let agentsLength = this.simulator.agentCount;
+    public buildAgentTree(): void {
+        const agentsLength = this.simulator.agentCount;
         if (this.agents.length != agentsLength) {
             this.agents.length = 0;
 
@@ -345,20 +345,9 @@ export class AgentKdTree {
     public delAgent(agent: Agent): void {
         const index = this.agents.indexOf(agent);
         if (index == -1) return;
-        this.agents.splice(index, 1);
-        this.agentTree.length = this.agents.length * 2;
-    }
-    /**
-     * Computes the agent neighbors of the specified agent.
-     * @param agent The agent for which agent neighbors are to be computed.
-     * @param rangeSq The squared range around the agent.
-     */
-    computeAgentNeighbors(agent: Agent, rangeSq: number): number {
-        return this.queryAgentTreeRecursive3(agent, rangeSq, 0);
-    }
-
-    queryNearAgent(point: IVector2, radius: number, out: number[] = []): number[] {
-        return this.queryAgentTreeRecursive4(point, radius * radius, 0, out);
+        this.agents[index] = null;
+        // this.agents.splice(index, 1);
+        // this.agentTree.length = this.agents.length * 2;
     }
 
     /**
@@ -367,8 +356,8 @@ export class AgentKdTree {
      * @param end The ending agent k-D tree node index.
      * @param node The current agent k-D tree node index.
      */
-    buildAgentTreeRecursive(begin: number, end: number, node: number): void {
-        let treeNode = this.agentTree[node];
+    private buildAgentTreeRecursive(begin: number, end: number, node: number): void {
+        const treeNode = this.agentTree[node];
         treeNode.begin = begin;
         treeNode.end = end;
         treeNode.minX = treeNode.maxX = this.agents[begin].position.x;
@@ -383,8 +372,8 @@ export class AgentKdTree {
 
         if (end - begin > AgentKdTree.MAX_LEAF_SIZE) {
             /* No leaf node. */
-            let isVertical: boolean = treeNode.maxX - treeNode.minX > treeNode.maxY - treeNode.minY;
-            let splitValue: number = 0.5 * (isVertical ? treeNode.maxX + treeNode.minX : treeNode.maxY + treeNode.minY);
+            const isVertical: boolean = treeNode.maxX - treeNode.minX > treeNode.maxY - treeNode.minY;
+            const splitValue: number = 0.5 * (isVertical ? treeNode.maxX + treeNode.minX : treeNode.maxY + treeNode.minY);
 
             let left: number = begin;
             let right: number = end;
@@ -399,7 +388,7 @@ export class AgentKdTree {
                 }
 
                 if (left < right) {
-                    let tempAgent = this.agents[left];
+                    const tempAgent = this.agents[left];
                     this.agents[left] = this.agents[right - 1];
                     this.agents[right - 1] = tempAgent;
                     ++left;
@@ -423,44 +412,13 @@ export class AgentKdTree {
         }
     }
 
-    queryAgentTreeRecursive4(position: IVector2, rangeSq: number, node: number, out: number[]): number[] {
-        let treeNode = this.agentTree[node];
-        if (treeNode.end - treeNode.begin <= AgentKdTree.MAX_LEAF_SIZE) {
-            for (let i = treeNode.begin; i < treeNode.end; ++i) {
-                const target = this.agents[i];
-                let distSq = Vector2.distanceSq(position, target.position);
-                if (distSq < rangeSq)
-                    out.push(target.id);
-            }
-        } else {
-            let treeNodeLeft = this.agentTree[treeNode.left];
-            let treeNodeRight = this.agentTree[treeNode.right];
-            let distSqLeft: number = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - position.x))
-                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeLeft.maxX))
-                + RVOMath.sqr(Math.max(0.0, treeNodeLeft.minY - position.y))
-                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeLeft.maxY));
-            let distSqRight: number = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - position.x))
-                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeRight.maxX))
-                + RVOMath.sqr(Math.max(0.0, treeNodeRight.minY - position.y))
-                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeRight.maxY));
-
-            if (distSqLeft < distSqRight) {
-                if (distSqLeft < rangeSq) {
-                    this.queryAgentTreeRecursive4(position, rangeSq, treeNode.left, out);
-
-                    if (distSqRight < rangeSq)
-                        this.queryAgentTreeRecursive4(position, rangeSq, treeNode.right, out);
-                }
-            } else {
-                if (distSqRight < rangeSq) {
-                    this.queryAgentTreeRecursive4(position, rangeSq, treeNode.right, out);
-
-                    if (distSqLeft < rangeSq)
-                        this.queryAgentTreeRecursive4(position, rangeSq, treeNode.left, out);
-                }
-            }
-        }
-        return out;
+    /**
+     * Computes the agent neighbors of the specified agent.
+     * @param agent The agent for which agent neighbors are to be computed.
+     * @param rangeSq The squared range around the agent.
+     */
+    public computeAgentNeighbors(agent: Agent, rangeSq: number): number {
+        return this.queryAgentTreeRecursive3(agent, rangeSq, 0);
     }
 
     /**
@@ -469,20 +427,20 @@ export class AgentKdTree {
      * @param rangeSq The squared range around the agent.
      * @param node The current agent k-D tree node index.
      */
-    queryAgentTreeRecursive3(agent: Agent, rangeSq: number, node: number): number {
-        let treeNode = this.agentTree[node];
+    private queryAgentTreeRecursive3(agent: Agent, rangeSq: number, node: number): number {
+        const treeNode = this.agentTree[node];
         if (treeNode.end - treeNode.begin <= AgentKdTree.MAX_LEAF_SIZE) {
             for (let i = treeNode.begin; i < treeNode.end; ++i) {
                 rangeSq = agent.insertAgentNeighbor(this.agents[i], rangeSq);
             }
         } else {
-            let treeNodeLeft = this.agentTree[treeNode.left];
-            let treeNodeRight = this.agentTree[treeNode.right];
-            let distSqLeft = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - agent.position.x))
+            const treeNodeLeft = this.agentTree[treeNode.left];
+            const treeNodeRight = this.agentTree[treeNode.right];
+            const distSqLeft = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - agent.position.x))
                 + RVOMath.sqr(Math.max(0.0, agent.position.x - treeNodeLeft.maxX))
                 + RVOMath.sqr(Math.max(0.0, treeNodeLeft.minY - agent.position.y))
                 + RVOMath.sqr(Math.max(0.0, agent.position.y - treeNodeLeft.maxY));
-            let distSqRight = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - agent.position.x))
+            const distSqRight = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - agent.position.x))
                 + RVOMath.sqr(Math.max(0.0, agent.position.x - treeNodeRight.maxX))
                 + RVOMath.sqr(Math.max(0.0, treeNodeRight.minY - agent.position.y))
                 + RVOMath.sqr(Math.max(0.0, agent.position.y - treeNodeRight.maxY));
@@ -506,5 +464,49 @@ export class AgentKdTree {
 
         }
         return rangeSq;
+    }
+
+    public queryNearAgent(point: IVector2, radius: number, callback: (angntId: number) => void): void {
+        return this.queryAgentTreeRecursive4(point, radius * radius, 0, callback);
+    }
+
+    private queryAgentTreeRecursive4(position: IVector2, rangeSq: number, node: number, callback: (angntId: number) => void): void {
+        const treeNode = this.agentTree[node];
+        if (treeNode.end - treeNode.begin <= AgentKdTree.MAX_LEAF_SIZE) {
+            for (let i = treeNode.begin; i < treeNode.end; ++i) {
+                const target = this.agents[i];
+                if (target == null) continue;
+                const distSq = Vector2.distanceSq(position, target.position);
+                if (distSq < rangeSq)
+                    callback(target.id);
+            }
+        } else {
+            const treeNodeLeft = this.agentTree[treeNode.left];
+            const treeNodeRight = this.agentTree[treeNode.right];
+            const distSqLeft: number = RVOMath.sqr(Math.max(0.0, treeNodeLeft.minX - position.x))
+                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeLeft.maxX))
+                + RVOMath.sqr(Math.max(0.0, treeNodeLeft.minY - position.y))
+                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeLeft.maxY));
+            const distSqRight: number = RVOMath.sqr(Math.max(0.0, treeNodeRight.minX - position.x))
+                + RVOMath.sqr(Math.max(0.0, position.x - treeNodeRight.maxX))
+                + RVOMath.sqr(Math.max(0.0, treeNodeRight.minY - position.y))
+                + RVOMath.sqr(Math.max(0.0, position.y - treeNodeRight.maxY));
+
+            if (distSqLeft < distSqRight) {
+                if (distSqLeft < rangeSq) {
+                    this.queryAgentTreeRecursive4(position, rangeSq, treeNode.left, callback);
+
+                    if (distSqRight < rangeSq)
+                        this.queryAgentTreeRecursive4(position, rangeSq, treeNode.right, callback);
+                }
+            } else {
+                if (distSqRight < rangeSq) {
+                    this.queryAgentTreeRecursive4(position, rangeSq, treeNode.right, callback);
+
+                    if (distSqLeft < rangeSq)
+                        this.queryAgentTreeRecursive4(position, rangeSq, treeNode.left, callback);
+                }
+            }
+        }
     }
 }
