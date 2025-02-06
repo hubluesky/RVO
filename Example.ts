@@ -266,9 +266,9 @@ function circleObstacleExample(): ExampleResult {
         agentRender.push({ id: agentId, color: "#ffff00" });
     }
 
-    const agentId = rvo.addAgent(Layer.Layer1, new Vector2(), 30, 0, 0, 0, 0);
-    rvo.freezeAgent(agentId);
-    agentRender.push({ id: agentId, color: "#ff0000" });
+    const vertices = Simulator.createCircleObstacleVertices(new Vector2(30, 0), 200, 100);
+    const obstacleId = rvo.addObstacle(Layer.Layer1, vertices);
+    obstacleRender.push(vertices);
 
     // const ow = 50, oh = 50, ox = 0, oy = 0;
     // const obstacle1: Vector2[] = [];
@@ -292,7 +292,7 @@ function blockObstacleExample(): ExampleResult {
      * Add agents, specifying their start position, and store their
      * goals on the opposite side of the environment.
      */
-    const agentCount = 4;
+    const agentCount = 2;
     const distance = 280;
     for (let i = 0; i < agentCount; ++i) {
         const position = new Vector2(Math.cos(i * 2 * Math.PI / agentCount), Math.sin(i * 2 * Math.PI / agentCount));
@@ -309,8 +309,41 @@ function blockObstacleExample(): ExampleResult {
     obstacle1.push(new Vector2(+ow + ox, -oh + oy));
     obstacle1.push(new Vector2(+ow + ox, +oh + oy));
     obstacle1.push(new Vector2(-ow + ox, +oh + oy));
-    const obstacleId1 = rvo.addObstacle(Layer.Layer1,obstacle1);
+    const obstacleId1 = rvo.addObstacle(Layer.Layer1, obstacle1);
     obstacleRender.push(obstacle1);
+
+    return { goals, agentRender, obstacleRender };
+}
+
+function avoidenceWeightExample(): ExampleResult {
+    const goals: Vector2[] = [];
+    const radius = 20;
+    const agentRender: AgentRender[] = [];
+    const obstacleRender: Vector2[][] = [];
+    const speed = 50.0;
+    /*
+     * Add agents, specifying their start position, and store their
+     * goals on the opposite side of the environment.
+     */
+    const agentCount = 3;
+    const distance = 280;
+    const heightOffset = 100;
+
+    for (let i = 0; i < agentCount; ++i) {
+        const position1 = new Vector2(distance + i, heightOffset * i);
+        const id1 = rvo.addAgent(Layer.Layer1, position1, radius, speed);
+        rvo.setAgentAvoidenceWeight(id1, 1.0);
+        agentRender.push({ id: id1, color: "#ffff00" });
+
+        const position2 = new Vector2(-distance - i, heightOffset * i);
+        const id2 = rvo.addAgent(Layer.Layer1, position2, radius, speed);
+        rvo.setAgentAvoidenceWeight(id2, 0.0);
+        agentRender.push({ id: id2, color: "#00ffff" });
+
+        goals[id1] = position2;
+        goals[id2] = position1;
+        obstacleRender.push([position1, position2]);
+    }
 
     return { goals, agentRender, obstacleRender };
 }
@@ -361,7 +394,8 @@ export function main() {
     // const result = blockExample();
     // const result = circleExample();
     // const result = circleObstacleExample();
-    const result = blockObstacleExample();
+    // const result = blockObstacleExample();
+    const result = avoidenceWeightExample();
 
     rvo.processObstacles();
     let lastTime = Date.now();

@@ -170,6 +170,30 @@ export class Simulator {
         return obstacleNo;
     }
 
+    /**
+     * Creates vertices for a circular obstacle.
+     * 
+     * This static method generates an array of `Vector2` objects that form a circular obstacle. 
+     * The circle is approximated by a polygon with the specified number of segments. Each vertex 
+     * is calculated based on the center point, radius, and angle determined by the segment count.
+     * 
+     * @param center - The center point of the circular obstacle as an `IVector2`.
+     * @param radius - The radius of the circular obstacle.
+     * @param segments - The number of segments (sides) used to approximate the circle.
+     * @returns An array of `Vector2` objects representing the vertices of the circular obstacle.
+     */
+    public static createCircleObstacleVertices(center: IVector2, radius: number, segments: number): Vector2[] {
+        const vertices: Vector2[] = [];
+        for (let i = 0; i < segments; i++) {
+            const angle = (i * 2 * Math.PI) / segments;
+            vertices.push(new Vector2(
+                center.x + radius * Math.cos(angle),
+                center.y + radius * Math.sin(angle)
+            ));
+        }
+        return vertices;
+    }
+
     public delObstacle(obstacleNo: number): boolean {
         let result: boolean = false;
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
@@ -420,6 +444,14 @@ export class Simulator {
     public queryNearAgent(point: IVector2, radius: number, callback: (angntId: number) => void): void {
         if (this.agentCount == 0) return;
         return this.agentTree.queryNearAgent(point, radius, callback);
+    }
+
+    public setAgentAvoidenceWeight(agentNo: number, weight: number): void {
+        this.agents[agentNo].avoidenceWeight = weight;
+    }
+
+    public getAgentAvoidenceWeight(agentNo: number): number {
+        return this.agents[agentNo].avoidenceWeight;
     }
 
     public freezeAgent(agentNo: number): void {

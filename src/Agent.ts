@@ -31,6 +31,7 @@ export class Agent {
     timeHorizon: number = 0;
     timeHorizonObst: number = 0;
     maxNeighbors: number = 0;
+    avoidenceWeight: number = 0.5;
     isFreeze: boolean = false;
     userData: any;
 
@@ -51,6 +52,10 @@ export class Agent {
             rangeSq = RVOMath.sqr(this.timeHorizon * this.maxSpeed + this.radius);
             kdTree.computeAgentNeighbors(this, rangeSq);
         }
+    }
+
+    private getAvoidenceWeight(otherAvoidenceWeight: number): number {
+        return this.avoidenceWeight / (this.avoidenceWeight + otherAvoidenceWeight);
     }
 
     /**
@@ -351,7 +356,9 @@ export class Agent {
                 u = Vector2.multiply(unitW, combinedRadius * invTimeStep - wLength, __vecTemp3);
             }
 
-            Vector2.add(this.velocity, u.multiply(0.5), line.point);
+            // Vector2.add(this.velocity, u.multiply(0.5), line.point);
+            const avoidenceWeight = other.isFreeze ? 1 : this.getAvoidenceWeight(other.avoidenceWeight);
+            Vector2.add(this.velocity, u.multiply(avoidenceWeight), line.point);
             this.orcaLines.push(line);
         }
 
