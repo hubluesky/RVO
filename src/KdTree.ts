@@ -345,9 +345,7 @@ export class AgentKdTree {
     public delAgent(agent: Agent): void {
         const index = this.agents.indexOf(agent);
         if (index == -1) return;
-        this.agents[index] = null;
-        // this.agents.splice(index, 1);
-        // this.agentTree.length = this.agents.length * 2;
+        this.agents.splice(index, 1);
     }
 
     /**

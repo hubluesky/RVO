@@ -2,9 +2,10 @@
 import { Simulator, Vector2 } from "rvo";
 
 enum Layer {
-    Layer1 = 0,
-    Layer2 = 1,
-    Layer3 = 2,
+    Layer1,
+    Layer2,
+    Layer3,
+    Layer4,
 }
 
 const rvo = new Simulator();
@@ -12,6 +13,7 @@ rvo.initLayerMatrix([
     [Layer.Layer1, Layer.Layer3],
     [Layer.Layer2, Layer.Layer3],
     [Layer.Layer3, Layer.Layer2, Layer.Layer1],
+    [],
 ])
 
 function drawCicle(context: CanvasRenderingContext2D, x: number, y: number, radius: number, color: string = "#ffff00"): void {
@@ -348,6 +350,34 @@ function avoidenceWeightExample(): ExampleResult {
     return { goals, agentRender, obstacleRender };
 }
 
+function layerExample(): ExampleResult {
+    const goals: Vector2[] = [];
+    const radius = 20;
+    const agentRender: AgentRender[] = [];
+    const obstacleRender: Vector2[][] = [];
+    const speed = 500.0;
+
+    const distance = 280;
+
+    const position1 = new Vector2(distance, 0);
+    const id1 = rvo.addAgent(Layer.Layer1, position1, radius, speed);
+    rvo.setAgentAvoidenceWeight(id1, 1.0);
+    agentRender.push({ id: id1, color: "#ffff00" });
+
+    goals[id1] = new Vector2(-distance, 0);
+
+    const ow = 50, oh = 50, ox = 0, oy = 0;
+    const obstacle1: Vector2[] = [];
+    obstacle1.push(new Vector2(-ow + ox, -oh + oy));
+    obstacle1.push(new Vector2(+ow + ox, -oh + oy));
+    obstacle1.push(new Vector2(+ow + ox, +oh + oy));
+    obstacle1.push(new Vector2(-ow + ox, +oh + oy));
+    const obstacleId1 = rvo.addObstacle(Layer.Layer4, obstacle1);
+    obstacleRender.push(obstacle1);
+
+    return { goals, agentRender, obstacleRender };
+}
+
 function queryNearAgentExample(): ExampleResult {
     const goals: Vector2[] = [];
     const radius = 8;
@@ -395,7 +425,8 @@ export function main() {
     // const result = circleExample();
     // const result = circleObstacleExample();
     // const result = blockObstacleExample();
-    const result = avoidenceWeightExample();
+    // const result = avoidenceWeightExample();
+    const result = layerExample();
 
     rvo.processObstacles();
     let lastTime = Date.now();
